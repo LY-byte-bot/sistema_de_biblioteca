@@ -1,0 +1,81 @@
+/* ==========================================================================
+   ESTILOS COMPACTOS Y MINIMALISTAS - SISTEMA DE BIBLIOTECA (UTP)
+   Bootstrap 5 hace el 90% del trabajo pesado. Solo estilos esenciales.
+   ========================================================================== */
+
+body {
+    background-color: #f8fafc;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Tarjetas con estilo Wireframe limpio */
+.wire-card {
+    border: 2px solid #334155;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.wire-header-line {
+    border-bottom: 2px dashed #94a3b8;
+}
+
+/* Logo de 4 libros apilados de colores de la institución */
+.brand-books {
+    display: inline-flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 24px;
+    margin-right: 8px;
+}
+.brand-books span { width: 5px; border-radius: 2px; }
+.book-red    { height: 24px; background-color: #ef4444; }
+.book-yellow { height: 20px; background-color: #eab308; }
+.book-green  { height: 22px; background-color: #22c55e; }
+.book-blue   { height: 18px; background-color: #06b6d4; }
+
+/* Portada del libro estilo Wireframe (gris con líneas cruzadas) */
+.book-cover-placeholder {
+    height: 120px;
+    background: #f1f5f9;
+    border: 1.5px solid #64748b;
+    border-radius: 8px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.book-cover-placeholder::before, .book-cover-placeholder::after {
+    content: '';
+    position: absolute;
+    width: 140%;
+    height: 1px;
+    background: #cbd5e1;
+}
+.book-cover-placeholder::before { transform: rotate(35deg); }
+.book-cover-placeholder::after  { transform: rotate(-35deg); }
+.book-cover-placeholder .cover-text {
+    position: relative;
+    z-index: 2;
+    background: rgba(255,255,255,0.9);
+    padding: 2px 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #475569;
+}
+.book-cover-placeholder.large { height: 220px; }
+
+/* Botones con colores suaves de las maquetas */
+.btn-wire-blue   { background: #e0e7ff; color: #1e1b4b; border: 1.5px solid #6366f1; font-weight: 600; }
+.btn-wire-green  { background: #d1fae5; color: #064e3b; border: 1.5px solid #10b981; font-weight: 600; }
+.btn-wire-yellow { background: #fef08a; color: #713f12; border: 1.5px solid #eab308; font-weight: 600; }
+.btn-wire-outline{ background: #ffffff; color: #334155; border: 1.5px solid #64748b; font-weight: 600; }
+
+/* Avisos destacados */
+.notice-box-blue   { background: #eff6ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; color: #1e3a8a; }
+.notice-box-yellow { background: #fefce8; border: 2px dashed #ca8a04; border-radius: 8px; padding: 12px; color: #713f12; }
+
+/* Barra de navegación */
+.navbar-wire { background: #ffffff; border-bottom: 2px solid #334155; padding: 0.6rem 1rem; }
+.nav-link-wire { font-weight: 600; color: #475569; text-decoration: none; padding: 0.4rem 0.8rem; border-bottom: 3px solid transparent; }
+.nav-link-wire.active { color: #0f172a; border-bottom: 3px solid #0f172a; }

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin: Catalogación &amp; Gestión - Biblioteca Académica del Sur</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-light">
+
+    <!-- Barra Superior de Demostración Rápida -->
+    <nav class="navbar navbar-dark bg-dark py-1 px-3 d-print-none text-white small">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <span class="text-warning fw-semibold">
+                <i class="bi bi-mortarboard-fill me-1"></i> UTP - Marcos de Desarrollo Web (Thymeleaf + Bootstrap)
+            </span>
+            <div class="btn-group btn-group-sm">
+                <a th:href="@{/login}" class="btn btn-outline-light py-0 px-2">7.1 Login</a>
+                <a th:href="@{/registro}" class="btn btn-outline-light py-0 px-2">7.2 Registro</a>
+                <a th:href="@{/catalogo}" class="btn btn-outline-light py-0 px-2">7.3 Catálogo</a>
+                <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
+                <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
+                <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
+                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light active py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- BARRA DE NAVEGACIÓN ADMINISTRATIVA -->
+    <header class="navbar-wire sticky-top">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="brand-books">
+                    <span class="book-red"></span>
+                    <span class="book-yellow"></span>
+                    <span class="book-green"></span>
+                    <span class="book-blue"></span>
+                </div>
+                <span class="fw-bold fs-5 text-dark">Panel Admin - Biblioteca Académica</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 my-2 my-md-0">
+                <a th:href="@{/admin/prestamos}" class="nav-link-wire">Control de Préstamos &amp; WhatsApp</a>
+                <a th:href="@{/admin/catalogacion}" class="nav-link-wire active">Catalogación &amp; Gestión</a>
+                <a th:href="@{/admin/telemetria}" class="nav-link-wire">Telemetría Actuator</a>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="small fw-semibold text-dark">
+                    <i class="bi bi-shield-lock-fill me-1 text-primary"></i> Bibliotecario
+                </span>
+                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 7.7. INTERFAZ: PANEL ADMIN (CATALOGACIÓN Y GESTIÓN) -->
+    <main class="container py-4">
+
+        <!-- Selector de Pestañas (Tabs) acordado para Registrar y Quitar Libros -->
+        <div class="d-flex gap-2 mb-4 p-2 bg-white rounded-3 border">
+            <a th:href="@{/admin/catalogacion(tab='formulario')}" class="admin-tab flex-fill text-center text-decoration-none" th:classappend="${tabActiva == 'formulario' ? 'active' : ''}">
+                <i class="bi bi-plus-circle me-1"></i> 1. Formulario: Registrar Nuevo Libro
+            </a>
+            <a th:href="@{/admin/catalogacion(tab='inventario')}" class="admin-tab flex-fill text-center text-decoration-none" th:classappend="${tabActiva == 'inventario' ? 'active' : ''}">
+                <i class="bi bi-collection me-1"></i> 2. Inventario: Libros Registrados y Dar de Baja (Eliminar)
+            </a>
+        </div>
+
+        <!-- PESTAÑA 1: FORMULARIO DE REGISTRO DE NUEVO LIBRO -->
+        <div th:if="${tabActiva == 'formulario'}" class="wire-card p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold text-dark mb-0">Registro, Catalogación e Indexación Full-Text de Nuevo Libro</h4>
+                <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill">Thymeleaf + Spring Boot</span>
+            </div>
+
+            <form th:action="@{/admin/libros/guardar}" method="post">
+                
+                <!-- 1. Metadatos Bibliográficos Generales -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">1. Metadatos Bibliográficos Generales</h6>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-dark">Título del Libro:</label>
+                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Sistemas Distribuidos: Principios y Paradigmas" value="Sistemas Distribuidos: Principios y Paradigmas" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark">Autor(es):</label>
+                            <input type="text" class="form-control" placeholder="Ej. Andrew S. Tanenbaum, Maarten van Steen" value="Andrew S. Tanenbaum, Maarten van Steen">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-dark">ISBN:</label>
+                            <input type="text" name="isbn" class="form-control" placeholder="978-0132392273" value="978-0132392273" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark">Categoría:</label>
+                            <input type="text" class="form-control" placeholder="Ingeniería de Sistemas y Redes" value="Ingeniería de Sistemas y Redes">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark">Editorial y Año:</label>
+                            <input type="text" name="editorial" class="form-control" placeholder="Pearson Educación - 2023" value="Pearson Educación - 2023">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-dark">Nº Ejemplares Físicos:</label>
+                            <input type="number" name="stockTotal" min="1" class="form-control" value="5" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-dark">Ubicación Física:</label>
+                            <input type="text" class="form-control" placeholder="Estante B-08" value="Estante B-08">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Sinopsis / Resumen Técnico:</label>
+                        <textarea name="resumen" class="form-control" rows="3" placeholder="Texto descriptivo y temático del material...">Texto fundamental sobre arquitectura de sistemas distribuidos, sincronización, replicación y tolerancia a fallos en entornos de computación moderna.</textarea>
+                    </div>
+                </div>
+
+                <!-- 2. Subida de Archivo Digital para Indexación -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">2. Subida de Archivo Digital para Indexación Full-Text</h6>
+                    
+                    <div class="p-3 border rounded-3 bg-light">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-7">
+                                <label class="form-label small fw-bold text-dark">Archivo PDF del Libro (Para Búsqueda Interna de Contenido y Muestra):</label>
+                                <input type="file" accept=".pdf,.epub" class="form-control form-control-sm mb-1">
+                                <div class="text-muted small">
+                                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i> archivo_distribuido_2023.pdf (16.4 MB) - Listo para procesamiento
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="notice-box-blue p-2 small">
+                                    <strong><i class="bi bi-info-circle-fill me-1"></i> Indexación Automática:</strong>
+                                    Al guardar, el backend extraerá los textos y términos clave para permitir búsquedas contextuales por los alumnos.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a th:href="@{/admin/catalogacion(tab='inventario')}" class="btn btn-wire-outline px-4">Cancelar</a>
+                    <button type="submit" class="btn btn-wire-blue px-4 py-2 fw-bold">
+                        💾 Guardar Libro e Iniciar Indexación Full-Text
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- PESTAÑA 2: INVENTARIO DE LIBROS Y DAR DE BAJA (ELIMINAR) -->
+        <div th:if="${tabActiva == 'inventario'}" class="wire-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="fw-bold text-dark mb-1">Inventario General de Libros (Gestión y Baja)</h4>
+                    <p class="text-muted small mb-0">Visualiza los títulos activos en biblioteca y da de baja ejemplares obsoletos o retirados.</p>
+                </div>
+                <a th:href="@{/admin/catalogacion(tab='formulario')}" class="btn btn-sm btn-wire-green">
+                    <i class="bi bi-plus-lg me-1"></i> Agregar Nuevo Libro
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-wire text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="text-start">Título de la Obra</th>
+                            <th>ISBN</th>
+                            <th>Categoría</th>
+                            <th>Stock Total</th>
+                            <th>Stock Disponible</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="l, iter : ${libros}">
+                            <td th:text="${iter.count}">1</td>
+                            <td class="text-start">
+                                <div class="fw-bold" th:text="${l.titulo}">Título del Libro</div>
+                                <div class="text-muted small">
+                                    <span th:if="${l.autores != null and !l.autores.isEmpty()}">
+                                        <span th:each="a, iStat : ${l.autores}">
+                                            <span th:text="${a.nombres + ' ' + (a.apellidos ?: '')}"></span><span th:if="${!iStat.last}">, </span>
+                                        </span>
+                                    </span>
+                                    <span th:unless="${l.autores != null and !l.autores.isEmpty()}">Autor Registrado</span>
+                                </div>
+                            </td>
+                            <td><code th:text="${l.isbn}">978-0134757599</code></td>
+                            <td>
+                                <span th:if="${l.categorias != null and !l.categorias.isEmpty()}" th:text="${l.categorias[0].nombre}">Ingeniería</span>
+                                <span th:unless="${l.categorias != null and !l.categorias.isEmpty()}">General</span>
+                            </td>
+                            <td class="fw-bold" th:text="${l.stockTotal ?: 1}">5</td>
+                            <td>
+                                <span th:if="${l.stockDisponible != null and l.stockDisponible > 0}" class="badge-stock-green">
+                                    <span th:text="${l.stockDisponible}">3</span> en sala
+                                </span>
+                                <span th:unless="${l.stockDisponible != null and l.stockDisponible > 0}" class="badge-stock-red">
+                                    0 copias
+                                </span>
+                            </td>
+                            <td>
+                                <!-- Formulario de eliminación para dar de baja libro -->
+                                <form th:action="@{'/admin/libros/eliminar/' + ${l.idLibro}}" method="post" onsubmit="return confirm('¿Está seguro de dar de baja este libro del catálogo?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger fw-bold" title="Dar de baja y retirar del catálogo">
+                                        <i class="bi bi-trash3-fill me-1"></i> Dar de Baja
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

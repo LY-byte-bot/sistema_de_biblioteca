@@ -74,5 +74,15 @@ public class LibroServiceImpl implements LibroService {
         }
         return libroRepository.buscarPorFiltros(query.trim());
     }
+
+    @Override
+    @Transactional
+    public boolean eliminarLibro(Integer id) {
+        if (libroRepository.existsById(id)) {
+            libroRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
 }
 

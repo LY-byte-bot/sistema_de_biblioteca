@@ -11,5 +11,6 @@ public interface LibroService {
     Libro registrarLibro(Libro libro);
     Libro actualizarLibro(Integer id, Libro libro);
     List<Libro> buscarPorFiltros(String query);
+    boolean eliminarLibro(Integer id);
 }
 

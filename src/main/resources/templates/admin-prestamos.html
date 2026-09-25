@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin: Préstamos &amp; WhatsApp - Biblioteca Académica del Sur</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-light">
+
+    <!-- Barra Superior de Demostración Rápida -->
+    <nav class="navbar navbar-dark bg-dark py-1 px-3 d-print-none text-white small">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <span class="text-warning fw-semibold">
+                <i class="bi bi-mortarboard-fill me-1"></i> UTP - Marcos de Desarrollo Web (Thymeleaf + Bootstrap)
+            </span>
+            <div class="btn-group btn-group-sm">
+                <a th:href="@{/login}" class="btn btn-outline-light py-0 px-2">7.1 Login</a>
+                <a th:href="@{/registro}" class="btn btn-outline-light py-0 px-2">7.2 Registro</a>
+                <a th:href="@{/catalogo}" class="btn btn-outline-light py-0 px-2">7.3 Catálogo</a>
+                <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
+                <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
+                <a th:href="@{/admin/prestamos}" class="btn btn-outline-light active py-0 px-2">7.6 Admin WhatsApp</a>
+                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- BARRA DE NAVEGACIÓN ADMINISTRATIVA -->
+    <header class="navbar-wire sticky-top">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="brand-books">
+                    <span class="book-red"></span>
+                    <span class="book-yellow"></span>
+                    <span class="book-green"></span>
+                    <span class="book-blue"></span>
+                </div>
+                <span class="fw-bold fs-5 text-dark">Panel Admin - Biblioteca Académica</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 my-2 my-md-0">
+                <a th:href="@{/admin/prestamos}" class="nav-link-wire active">Control de Préstamos &amp; WhatsApp</a>
+                <a th:href="@{/admin/catalogacion}" class="nav-link-wire">Catalogación &amp; Gestión</a>
+                <a th:href="@{/admin/telemetria}" class="nav-link-wire">Telemetría Actuator</a>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="small fw-semibold text-dark">
+                    <i class="bi bi-shield-lock-fill me-1 text-primary"></i> Bibliotecario
+                </span>
+                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 7.6. INTERFAZ: PANEL ADMIN (PRÉSTAMOS & WHATSAPP) -->
+    <main class="container py-4">
+
+        <!-- Buscador y Monitor -->
+        <div class="wire-card p-3 mb-4">
+            <h6 class="fw-bold text-dark mb-2">Monitor de Circulación y Estados de Préstamos</h6>
+            <div class="row g-2 align-items-center">
+                <div class="col-md-7">
+                    <label class="form-label small text-muted mb-1">Buscar por DNI del Lector, Celular o Código de Préstamo:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-sm" placeholder="Ej. 72330451 o PR-2026-089" value="72330451">
+                        <button class="btn btn-sm btn-wire-blue" type="button">Buscar Registro</button>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small text-muted mb-1">Filtrar por Estado:</label>
+                    <select class="form-select form-select-sm">
+                        <option>Todos los préstamos</option>
+                        <option selected>Solo préstamos vencidos con mora</option>
+                        <option>Solo préstamos vigentes</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Control de Préstamos -->
+        <div class="wire-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-dark">Control de Préstamos y Estados de Circulación</h5>
+                <span class="badge-stock-red">8 Préstamos con Retraso Detectados</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-wire text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th class="text-start">Lector / Contacto</th>
+                            <th class="text-start">Libro &amp; Ejemplar</th>
+                            <th>Fecha Límite</th>
+                            <th>Estado Actual en el que se Encuentra</th>
+                            <th>Acciones de Gestión / Notificación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">PR-2026-089</td>
+                            <td class="text-start">
+                                <div class="fw-bold">Ivan Mamani Villanueva</div>
+                                <div class="text-muted small">DNI: 72330451 | +51 958 123 456</div>
+                            </td>
+                            <td class="text-start">
+                                <div class="fw-bold">Patrones de Diseño de Software</div>
+                                <div class="text-muted small">Ejemplar #02 (Estante B-4)</div>
+                            </td>
+                            <td>22/08/2026</td>
+                            <td>
+                                <span class="badge-stock-yellow text-danger fw-bold d-inline-block mb-1">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i> VENCIDO (+3 Días Retraso)
+                                </span>
+                                <div class="text-danger fw-bold small">Multa: S/. 6.00</div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button onclick="document.getElementById('seccion-whatsapp').scrollIntoView({behavior: 'smooth'});" class="btn btn-outline-success fw-bold">
+                                        <i class="bi bi-whatsapp me-1"></i> Enviar WhatsApp
+                                    </button>
+                                    <button onclick="document.getElementById('seccion-devolucion').scrollIntoView({behavior: 'smooth'});" class="btn btn-outline-secondary">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i> Recibir Libro
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">PR-2026-104</td>
+                            <td class="text-start">
+                                <div class="fw-bold">Ivan Mamani Villanueva</div>
+                                <div class="text-muted small">DNI: 72330451 | +51 958 123 456</div>
+                            </td>
+                            <td class="text-start">
+                                <div class="fw-bold">Arquitectura Web con Spring Boot 3</div>
+                                <div class="text-muted small">Ejemplar #01 (Estante A-12)</div>
+                            </td>
+                            <td>02/09/2026</td>
+                            <td>
+                                <span class="badge-stock-green fw-bold">&check; VIGENTE (Quedan 5 días)</span>
+                                <div class="text-success small">Multa: S/. 0.00</div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-secondary">Detalle</button>
+                                    <button class="btn btn-outline-secondary">Recibir Libro</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Apartado de Notificación y Recordatorio por WhatsApp -->
+        <div id="seccion-whatsapp" class="wire-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-dark mb-0">
+                    <i class="bi bi-whatsapp text-success me-1"></i> Apartado de Notificación y Recordatorio por WhatsApp al Lector
+                </h6>
+                <span class="badge bg-success-subtle text-success border border-success px-2 py-1 small rounded-pill">
+                    API WhatsApp Business Conectada
+                </span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="p-3 bg-light rounded-3 border small">
+                        <div class="mb-1"><strong>Destinatario:</strong> Ivan Mamani Villanueva</div>
+                        <div class="mb-1"><strong>Número WhatsApp:</strong> +51 958 123 456</div>
+                        <div class="mb-1"><strong>Libro Prestado:</strong> Patrones de Diseño de Software</div>
+                        <div class="mb-1"><strong>Vencimiento:</strong> 22/08/2026 (3 días de retraso)</div>
+                        <div class="fw-bold text-danger">Multa Acumulada: S/. 6.00</div>
+                    </div>
+                </div>
+
+                <div class="col-md-7">
+                    <label class="form-label small fw-bold text-dark mb-1">Plantilla del Mensaje de WhatsApp (Editable):</label>
+                    <textarea id="textoWhatsapp" class="form-control font-monospace small mb-2" rows="6">🔔 BIBLIOTECA ACADÉMICA DEL SUR - RECORDATORIO DE DEVOLUCIÓN:
+
+Estimado(a) Ivan Mamani Villanueva,
+Le recordamos que el préstamo del libro "Patrones de Diseño de Software" venció el 22/08/2026 (3 días de retraso).
+Multa acumulada actual: S/. 6.00.
+Por favor acérquese a la brevedad a la sala de Atención al Usuario para efectuar la devolución física y regularizar su situación.
+
+¡Muchas gracias!</textarea>
+                    
+                    <button onclick="window.open('https://wa.me/51958123456?text=' + encodeURIComponent(document.getElementById('textoWhatsapp').value), '_blank'); alert('✓ Notificación enviada exitosamente.');" class="btn btn-wire-green py-2 px-3 w-100 fw-bold">
+                        <i class="bi bi-send-fill me-1"></i> Enviar Notificación por WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registro de Devolución Física del Ejemplar en Mostrador -->
+        <div id="seccion-devolucion" class="wire-card p-4">
+            <h6 class="fw-bold text-dark mb-3">
+                <i class="bi bi-cash-coin text-primary me-1"></i> Registro de Devolución Física del Ejemplar en Mostrador
+            </h6>
+            
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-dark">Estado Físico del Libro Devuelto:</label>
+                    <select class="form-select">
+                        <option>Óptimo / Sin daños (Reingresa al catálogo)</option>
+                        <option>Regular / Desgaste leve</option>
+                        <option>Dañado (Requiere encuadernación)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-dark">Cobro de Multa en Caja Física:</label>
+                    <div class="p-2 text-center rounded border border-danger bg-danger-subtle text-danger fw-bold fs-6">
+                        S/. 6.00 (Efectivo cobrado físicamente)
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <button onclick="alert('✓ ¡Devolución Confirmada!\n\nSe ha reintegrado el ejemplar al catálogo y registrado el pago en caja física.');" class="btn btn-wire-green w-100 py-2 fw-bold">
+                        &check; Confirmar Devolución &amp; Liberar Lector
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

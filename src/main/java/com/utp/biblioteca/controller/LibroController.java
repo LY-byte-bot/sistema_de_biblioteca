@@ -49,5 +49,19 @@ public class LibroController {
     public ResponseEntity<List<Libro>> buscarPorFiltros(@RequestParam(name = "query", required = false, defaultValue = "") String query) {
         return ResponseEntity.ok(libroService.buscarPorFiltros(query));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarLibro(@PathVariable Integer id) {
+        try {
+            boolean eliminado = libroService.eliminarLibro(id);
+            if (eliminado) {
+                return ResponseEntity.ok("Libro eliminado exitosamente");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Libro no encontrado con ID: " + id);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("No se puede eliminar el libro porque cuenta con préstamos o reservas registradas.");
+        }
+    }
 }
 

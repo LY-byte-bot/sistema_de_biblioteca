@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Libros - Biblioteca Académica del Sur</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-light">
+
+    <!-- Barra Superior de Demostración Rápida -->
+    <nav class="navbar navbar-dark bg-dark py-1 px-3 d-print-none text-white small">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <span class="text-warning fw-semibold">
+                <i class="bi bi-mortarboard-fill me-1"></i> UTP - Marcos de Desarrollo Web (Thymeleaf + Bootstrap)
+            </span>
+            <div class="btn-group btn-group-sm">
+                <a th:href="@{/login}" class="btn btn-outline-light py-0 px-2">7.1 Login</a>
+                <a th:href="@{/registro}" class="btn btn-outline-light py-0 px-2">7.2 Registro</a>
+                <a th:href="@{/catalogo}" class="btn btn-outline-light active py-0 px-2">7.3 Catálogo</a>
+                <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
+                <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
+                <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
+                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- BARRA DE NAVEGACIÓN INSTITUCIONAL (MODO LECTOR) -->
+    <header class="navbar-wire sticky-top">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="brand-books">
+                    <span class="book-red"></span>
+                    <span class="book-yellow"></span>
+                    <span class="book-green"></span>
+                    <span class="book-blue"></span>
+                </div>
+                <span class="fw-bold fs-5 text-dark">Biblioteca Académica del Sur</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 my-2 my-md-0">
+                <a th:href="@{/catalogo}" class="nav-link-wire active">Catálogo de Libros</a>
+                <a th:href="@{/prestamos}" class="nav-link-wire">Mis Préstamos y Multas</a>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="small fw-semibold text-dark">
+                    <i class="bi bi-person-fill me-1"></i> Ivan Mamani (Lector)
+                </span>
+                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 7.3. INTERFAZ: CATÁLOGO DE LIBROS -->
+    <main class="container py-4">
+
+        <!-- Bloque de Búsqueda y Filtros con marco negro/gris -->
+        <div class="wire-card p-3 p-md-4 mb-4">
+            <form th:action="@{/catalogo}" method="get">
+                <div class="row g-3 align-items-center mb-3">
+                    
+                    <!-- Input de búsqueda -->
+                    <div class="col-lg-8">
+                        <label class="form-label fw-bold small text-dark mb-1">Búsqueda de Material Bibliográfico:</label>
+                        <div class="input-group">
+                            <input type="text" name="query" th:value="${query}" class="form-control py-2" placeholder="Escribe un título, autor, resumen o palabra clave...">
+                            <button class="btn btn-wire-yellow px-4" type="submit">
+                                <i class="bi bi-search me-1"></i> Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modalidad de motor de búsqueda -->
+                    <div class="col-lg-4">
+                        <label class="form-label fw-bold small text-dark mb-1">Modalidad de Motor de Búsqueda:</label>
+                        <div class="d-flex gap-3 align-items-center pt-1 small">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="modo" id="modoEstandar" value="std">
+                                <label class="form-check-label" for="modoEstandar">Estándar (Título/Autor)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="modo" id="modoFullText" value="ft" checked>
+                                <label class="form-check-label fw-semibold" for="modoFullText">Full-Text (Contenido)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Fila de Filtros Selectores -->
+                <div class="row g-3 pt-2 border-top">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small text-dark mb-1">Filtrar por Categoría:</label>
+                        <select name="categoria" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todas las Categorías</option>
+                            <option th:each="cat : ${categorias}" th:value="${cat.nombre}" th:text="${cat.nombre}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small text-dark mb-1">Año de Publicación:</label>
+                        <select class="form-select form-select-sm">
+                            <option value="Todos">Todos los años</option>
+                            <option value="2024">2024 (Edición Actual)</option>
+                            <option value="2020-2026" selected>2020 - 2026 (Recientes)</option>
+                            <option value="anteriores">Anteriores a 2020</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small text-dark mb-1">Disponibilidad en Sala:</label>
+                        <select class="form-select form-select-sm">
+                            <option value="Todos" selected>Todos (Disponibles y Prestados)</option>
+                            <option value="Disponibles">Solo con Copias Disponibles</option>
+                            <option value="Agotados">Solo Agotados (Reservables)</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Barra de Estado de Resultados -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0 text-dark">
+                Resultados de la Búsqueda: <span class="text-primary"><span th:text="${libros.size()}">6</span> libros encontrados</span>
+            </h5>
+            <span class="text-muted small">
+                Indexación Full-Text activa sobre 1,420 documentos
+            </span>
+        </div>
+
+        <!-- Grilla de Libros (Renderizado Dinámico con Thymeleaf) -->
+        <div class="row g-4 mb-4">
+            <div th:each="libro : ${libros}" class="col-md-6 col-lg-4">
+                <div class="book-grid-card p-3">
+                    <div>
+                        <div class="row g-2 mb-2">
+                            <!-- Portada estilo Wireframe -->
+                            <div class="col-5">
+                                <div class="book-cover-placeholder">
+                                    <span class="cover-text">PORTADA DEL LIBRO</span>
+                                </div>
+                            </div>
+                            <!-- Datos del libro -->
+                            <div class="col-7">
+                                <h6 class="fw-bold text-dark mb-1 lh-sm" th:text="${libro.titulo}">Título del Libro</h6>
+                                <p class="text-muted small mb-1">
+                                    <strong>Autor:</strong>
+                                    <span th:if="${libro.autores != null and !libro.autores.isEmpty()}">
+                                        <span th:each="autor, iterStat : ${libro.autores}">
+                                            <span th:text="${autor.nombres + ' ' + (autor.apellidos ?: '')}"></span><span th:if="${!iterStat.last}">, </span>
+                                        </span>
+                                    </span>
+                                    <span th:unless="${libro.autores != null and !libro.autores.isEmpty()}">Varios Autores</span>
+                                </p>
+                                <p class="text-muted small mb-1">
+                                    <strong>Categoría:</strong>
+                                    <span th:if="${libro.categorias != null and !libro.categorias.isEmpty()}" th:text="${libro.categorias[0].nombre}">Ingeniería</span>
+                                    <span th:unless="${libro.categorias != null and !libro.categorias.isEmpty()}">General</span>
+                                </p>
+                                <p class="text-muted small mb-0">
+                                    <strong>Año:</strong> <span th:text="${libro.anioPublicacion ?: 2024}">2024</span> | 
+                                    <strong>ISBN:</strong> <span th:text="${libro.isbn}">978-0134757599</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Coincidencia Full-Text -->
+                        <div class="notice-box-blue py-1 px-2 my-2 small" style="font-size: 0.78rem;">
+                            <strong>Coincidencia:</strong> "<span th:text="${libro.resumen != null ? #strings.abbreviate(libro.resumen, 65) : 'Texto indexado disponible en catálogo.'}">Texto del libro...</span>"
+                        </div>
+                    </div>
+
+                    <!-- Footer de tarjeta con stock y botón de acción -->
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">
+                        <span th:if="${libro.stockDisponible != null and libro.stockDisponible > 0}" class="badge-stock-green">
+                            <span th:text="${libro.stockDisponible}">3</span> Disponibles en Sala
+                        </span>
+                        <span th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" class="badge-stock-red">
+                            0 Copias (Reservable)
+                        </span>
+
+                        <a th:if="${libro.stockDisponible != null and libro.stockDisponible > 0}" th:href="@{'/libro/' + ${libro.idLibro}}" class="btn btn-sm btn-wire-blue">
+                            Ver Ficha &amp; Pedir &rarr;
+                        </a>
+                        <a th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" th:href="@{'/libro/' + ${libro.idLibro}}" class="btn btn-sm btn-wire-yellow">
+                            Reservar Ejemplar &rarr;
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Paginador inferior (como en la maqueta) -->
+        <div class="d-flex justify-content-center mt-4">
+            <nav>
+                <ul class="pagination pagination-wire">
+                    <li class="page-item disabled"><a class="page-link" href="#">&laquo; Primero</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#">&lsaquo; Anterior</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">Siguiente &rsaquo;</a></li>
+                    <li class="page-item"><a class="page-link" href="#">Último &raquo;</a></li>
+                </ul>
+            </nav>
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

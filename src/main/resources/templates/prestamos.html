@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Préstamos y Multas - Biblioteca Académica del Sur</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-light">
+
+    <!-- Barra Superior de Demostración Rápida -->
+    <nav class="navbar navbar-dark bg-dark py-1 px-3 d-print-none text-white small">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <span class="text-warning fw-semibold">
+                <i class="bi bi-mortarboard-fill me-1"></i> UTP - Marcos de Desarrollo Web (Thymeleaf + Bootstrap)
+            </span>
+            <div class="btn-group btn-group-sm">
+                <a th:href="@{/login}" class="btn btn-outline-light py-0 px-2">7.1 Login</a>
+                <a th:href="@{/registro}" class="btn btn-outline-light py-0 px-2">7.2 Registro</a>
+                <a th:href="@{/catalogo}" class="btn btn-outline-light py-0 px-2">7.3 Catálogo</a>
+                <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
+                <a th:href="@{/prestamos}" class="btn btn-outline-light active py-0 px-2">7.5 Préstamos</a>
+                <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
+                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- BARRA DE NAVEGACIÓN INSTITUCIONAL -->
+    <header class="navbar-wire sticky-top">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="brand-books">
+                    <span class="book-red"></span>
+                    <span class="book-yellow"></span>
+                    <span class="book-green"></span>
+                    <span class="book-blue"></span>
+                </div>
+                <span class="fw-bold fs-5 text-dark">Biblioteca Académica del Sur</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 my-2 my-md-0">
+                <a th:href="@{/catalogo}" class="nav-link-wire">Catálogo de Libros</a>
+                <a th:href="@{/prestamos}" class="nav-link-wire active">Mis Préstamos y Multas</a>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="small fw-semibold text-dark">
+                    <i class="bi bi-person-fill me-1"></i> Ivan Mamani (Lector)
+                </span>
+                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 7.5. INTERFAZ: MIS PRÉSTAMOS Y MULTA DEL CLIENTE -->
+    <main class="container py-4">
+
+        <!-- 3 Tarjetas de Resumen Superior -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="metric-card blue">
+                    <div class="small fw-bold text-primary text-uppercase mb-1">Préstamos Activos</div>
+                    <div class="fs-2 fw-bold text-dark">2 Libros</div>
+                    <div class="text-muted small">En posesión física</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card red">
+                    <div class="small fw-bold text-danger text-uppercase mb-1">Multa Acumulada por Retraso</div>
+                    <div class="fs-2 fw-bold text-danger">S/. 6.00</div>
+                    <div class="text-danger small fw-semibold">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> 1 libro con 3 días de retraso
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card green">
+                    <div class="small fw-bold text-success text-uppercase mb-1">Devoluciones Cumplidas</div>
+                    <div class="fs-2 fw-bold text-success">12 Libros</div>
+                    <div class="text-muted small">Historial positivo</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla 1: Panel de Préstamos Activos -->
+        <div class="wire-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-dark">📋 1. Panel de Préstamos Activos</h5>
+                <span class="text-muted small">Cálculo de penalidades automatizado</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-wire text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th class="text-start">Título del Libro</th>
+                            <th>Fecha Préstamo</th>
+                            <th>Fecha Límite Entrega</th>
+                            <th>Estado del Préstamo</th>
+                            <th>Multa / Mora</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">PR-2026-089</td>
+                            <td class="text-start">
+                                <div class="fw-bold">Patrones de Diseño de Software</div>
+                                <div class="text-muted small">Erich Gamma (Gang of Four)</div>
+                            </td>
+                            <td>15/08/2026</td>
+                            <td class="fw-semibold">22/08/2026</td>
+                            <td>
+                                <span class="badge-stock-yellow">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Vencido (+3 días)
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-danger fw-bold">S/. 6.00</div>
+                                <div class="text-muted small" style="font-size: 0.75rem;">(S/. 2.00 / día retraso)</div>
+                            </td>
+                            <td>
+                                <button onclick="alert('Para devolver este libro y liquidar tu mora de S/. 6.00, acércate al mostrador de la biblioteca.');" class="btn btn-sm btn-outline-danger fw-bold">
+                                    Devolver en Biblioteca
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">PR-2026-104</td>
+                            <td class="text-start">
+                                <div class="fw-bold">Arquitectura Web con Spring Boot 3</div>
+                                <div class="text-muted small">Martin Fowler</div>
+                            </td>
+                            <td>26/08/2026</td>
+                            <td class="fw-semibold">02/09/2026</td>
+                            <td>
+                                <span class="badge-stock-green">
+                                    &check; Al día (5 días restantes)
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-success fw-bold">S/. 0.00 (Sin mora)</div>
+                            </td>
+                            <td>
+                                <button onclick="alert('✓ Solicitud de renovación enviada. Tu nuevo plazo vence el 09/09/2026.');" class="btn btn-sm btn-wire-blue">
+                                    Solicitar Renovación
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla 2: Historial de Devoluciones Anteriores -->
+        <div class="wire-card p-4 mb-4">
+            <h5 class="fw-bold mb-3 text-dark">📜 2. Historial de Devoluciones Anteriores</h5>
+
+            <div class="table-responsive">
+                <table class="table table-wire text-center align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th class="text-start">Título del Libro</th>
+                            <th>Fecha Devolución</th>
+                            <th>Estado Físico Ejemplar</th>
+                            <th>Multa Aplicada</th>
+                            <th>Estado de Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">PR-2026-045</td>
+                            <td class="text-start fw-semibold">Clean Code: Manual de Estilo Ágil</td>
+                            <td>04/08/2026</td>
+                            <td>
+                                <span class="badge-stock-green">&check; Óptimo [OK]</span>
+                            </td>
+                            <td class="fw-bold text-dark">S/. 0.00</td>
+                            <td>
+                                <span class="badge-stock-green">Conforme</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">PR-2026-012</td>
+                            <td class="text-start fw-semibold">Ingeniería de Software: Un Enfoque Práctico</td>
+                            <td>18/07/2026</td>
+                            <td>
+                                <span class="badge-stock-green">&check; Óptimo [OK]</span>
+                            </td>
+                            <td class="fw-bold text-dark">S/. 4.00 (2 días retraso)</td>
+                            <td>
+                                <span class="badge-stock-blue" style="background-color: #eff6ff; color: #1d4ed8; border: 1.5px solid #60a5fa; border-radius: 50rem; padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600;">
+                                    Cancelado en Caja Física
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Nota informativa amarilla inferior -->
+        <div class="notice-box-yellow">
+            <strong><i class="bi bi-info-circle-fill me-1"></i> Información Importante sobre Multas y Devolución Física:</strong>
+            El sistema no realiza cobros con tarjetas ni pasarelas electrónicas. Toda devolución de libros y cancelación de sanciones por retraso se realiza <strong>de forma física y presencial</strong> en el mostrador de Atención al Usuario de la biblioteca.
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

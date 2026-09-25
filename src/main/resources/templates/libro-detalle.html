@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Información del Libro - Biblioteca Académica del Sur</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-light">
+
+    <!-- Barra Superior de Demostración Rápida -->
+    <nav class="navbar navbar-dark bg-dark py-1 px-3 d-print-none text-white small">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <span class="text-warning fw-semibold">
+                <i class="bi bi-mortarboard-fill me-1"></i> UTP - Marcos de Desarrollo Web (Thymeleaf + Bootstrap)
+            </span>
+            <div class="btn-group btn-group-sm">
+                <a th:href="@{/login}" class="btn btn-outline-light py-0 px-2">7.1 Login</a>
+                <a th:href="@{/registro}" class="btn btn-outline-light py-0 px-2">7.2 Registro</a>
+                <a th:href="@{/catalogo}" class="btn btn-outline-light py-0 px-2">7.3 Catálogo</a>
+                <a th:href="@{'/libro/' + ${libro.idLibro}}" class="btn btn-outline-light active py-0 px-2">7.4 Info Libro</a>
+                <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
+                <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
+                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- BARRA DE NAVEGACIÓN INSTITUCIONAL -->
+    <header class="navbar-wire sticky-top">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="brand-books">
+                    <span class="book-red"></span>
+                    <span class="book-yellow"></span>
+                    <span class="book-green"></span>
+                    <span class="book-blue"></span>
+                </div>
+                <span class="fw-bold fs-5 text-dark">Biblioteca Académica del Sur</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 my-2 my-md-0">
+                <a th:href="@{/catalogo}" class="nav-link-wire active">Catálogo de Libros</a>
+                <a th:href="@{/prestamos}" class="nav-link-wire">Mis Préstamos y Multas</a>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="small fw-semibold text-dark">
+                    <i class="bi bi-person-fill me-1"></i> Ivan Mamani (Lector)
+                </span>
+                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 7.4. INTERFAZ: INFORMACIÓN DEL LIBRO -->
+    <main class="container py-4">
+        <div class="wire-card p-4 p-md-5">
+
+            <!-- Botón Volver al Catálogo -->
+            <div class="mb-3">
+                <a th:href="@{/catalogo}" class="btn btn-sm btn-wire-outline">
+                    &larr; Volver al Catálogo
+                </a>
+            </div>
+
+            <!-- Cabecera del Libro -->
+            <div class="d-flex flex-wrap justify-content-between align-items-start mb-4">
+                <div>
+                    <h3 class="fw-bold text-dark mb-1" th:text="${libro.titulo}">Arquitectura Web con Spring Boot 3</h3>
+                    <p class="text-muted fs-6 mb-0">
+                        Por:
+                        <span th:if="${libro.autores != null and !libro.autores.isEmpty()}">
+                            <span th:each="autor, iterStat : ${libro.autores}">
+                                <span th:text="${autor.nombres + ' ' + (autor.apellidos ?: '')}"></span><span th:if="${!iterStat.last}"> &amp; </span>
+                            </span>
+                        </span>
+                        <span th:unless="${libro.autores != null and !libro.autores.isEmpty()}">Martin Fowler &amp; Rod Johnson</span>
+                    </p>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <span th:if="${libro.stockDisponible != null and libro.stockDisponible > 0}" class="badge-stock-green fs-6 py-2 px-3">
+                        &check; <span th:text="${libro.stockDisponible}">3</span> Ejemplares Físicos Disponibles
+                    </span>
+                    <span th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" class="badge-stock-red fs-6 py-2 px-3">
+                        &times; Agotado Temporalmente (Solo Reserva)
+                    </span>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <!-- Portada Grande -->
+                <div class="col-md-4 col-lg-3">
+                    <div class="book-cover-placeholder large">
+                        <span class="cover-text">PORTADA DEL LIBRO</span>
+                    </div>
+                </div>
+
+                <!-- Ficha Técnica de Metadatos -->
+                <div class="col-md-8 col-lg-9">
+                    <div class="wire-card p-3 mb-3 bg-light">
+                        <div class="row g-3 small">
+                            <div class="col-md-6">
+                                <strong>Categoría:</strong>
+                                <span th:if="${libro.categorias != null and !libro.categorias.isEmpty()}" th:text="${libro.categorias[0].nombre}">Ingeniería de Sistemas y Software</span>
+                                <span th:unless="${libro.categorias != null and !libro.categorias.isEmpty()}">Ingeniería</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>ISBN:</strong> <span th:text="${libro.isbn}">978-0134757599</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Editorial:</strong> <span th:text="${libro.editorial ?: 'Addison-Wesley Professional'}">Addison-Wesley</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Año de Edición:</strong> <span th:text="${libro.anioPublicacion ?: 2024}">2024</span> (1ra Edición)
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Ubicación Física:</strong> Estante A-12 (Pabellón de Ingeniería)
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Plazo de Préstamo:</strong> 7 días calendario renovables
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sinopsis -->
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-dark mb-1">Sinopsis del Libro:</h6>
+                        <p class="text-secondary small mb-0 leading-relaxed" th:text="${libro.resumen}">
+                            Guía completa de diseño y construcción de arquitecturas backend robustas con Spring Boot 3.x, Spring Data JPA y PostgreSQL...
+                        </p>
+                    </div>
+
+                    <!-- Recuadro Azul Modificado según instrucción: Temas Clave del Libro -->
+                    <div class="notice-box-blue mb-3">
+                        <h6 class="fw-bold mb-2">
+                            <i class="bi bi-bookmark-star me-1"></i> Temas Clave y Palabras Destacadas de la Obra:
+                        </h6>
+                        <ul class="mb-0 ps-3 small">
+                            <li class="mb-1">Persistencia de datos y transacciones concurrentes con JPA y PostgreSQL.</li>
+                            <li class="mb-1">Diseño de controladores RESTful limpios, modelos de negocio y consumo de servicios.</li>
+                            <li>Arquitectura en capas, buenas prácticas de desarrollo institucional y control de stock.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="d-flex flex-wrap gap-3 mb-4">
+                        <button th:if="${libro.stockDisponible != null and libro.stockDisponible > 0}" onclick="alert('✓ ¡Préstamo Solicitado con Éxito!\n\nEl ejemplar ha sido reservado para ti por 24 horas. Acércate con tu DNI al mostrador de Atención al Usuario para el retiro físico.'); window.location.href='/prestamos';" class="btn btn-wire-yellow py-2 px-4">
+                            📖 Solicitar Préstamo de Ejemplar Físico
+                        </button>
+                        <button th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" onclick="alert('📌 ¡Reserva Registrada en Cola!\n\nHas ingresado a la lista de espera para este título. Te notificaremos cuando haya ejemplares libres.');" class="btn btn-wire-yellow py-2 px-4">
+                            📌 Reservar Ejemplar en Cola de Espera
+                        </button>
+
+                        <button onclick="alert('Iniciando descarga segura del extracto de muestra en PDF (Primeros 2 capítulos)...');" class="btn btn-wire-outline py-2 px-3">
+                            📄 Descargar Extracto de Muestra (PDF)
+                        </button>
+                    </div>
+
+                    <!-- Nota sobre Recojo Presencial (Conservada tal cual como aviso) -->
+                    <div class="notice-box-yellow">
+                        <div class="fw-bold mb-1">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Nota sobre el Recojo Presencial:
+                        </div>
+                        <div>
+                            Al solicitar el préstamo en la plataforma web, el ejemplar se reservará por <strong>24 horas</strong>. Deberás acercarte físicamente con tu DNI / carnet universitario al mostrador de Atención al Usuario para retirar el libro.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
