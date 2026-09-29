@@ -1,9 +1,3 @@
-// ==========================================================================
-// COMPONENTES MODULARES Y COMPACTOS - VUE.JS 3 (UTP)
-// Estructura ultra limpia y reducida mediante el uso de datos dinámicos
-// ==========================================================================
-
-// 1. Barra de herramientas para demostración rápida en la sustentación
 const DemoToolbar = {
     props: ['currentView'],
     emits: ['navegar'],
