@@ -1,8 +1,10 @@
 package com.utp.biblioteca.controller;
 
+import com.utp.biblioteca.entities.Autor;
 import com.utp.biblioteca.entities.Libro;
 import com.utp.biblioteca.entities.Prestamo;
 import com.utp.biblioteca.entities.Usuario;
+import com.utp.biblioteca.service.AutorService;
 import com.utp.biblioteca.service.CategoriaService;
 import com.utp.biblioteca.service.LibroService;
 import com.utp.biblioteca.service.PrestamoService;
@@ -11,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -22,6 +26,7 @@ public class ViewController {
     private final UsuarioService usuarioService;
     private final PrestamoService prestamoService;
     private final CategoriaService categoriaService;
+    private final AutorService autorService;
 
     // 7.1. Login
     @GetMapping({"/", "/login"})
@@ -123,5 +128,128 @@ public class ViewController {
         model.addAttribute("totalLibros", libroService.listarTodos().size());
         model.addAttribute("totalPrestamos", prestamoService.listarPrestamosActivos().size());
         return "admin-telemetria";
+    }
+
+    // 7.9. Panel Admin: Catálogo de Libros con Edición y Eliminación
+    @GetMapping("/admin/catalogo")
+    public String adminCatalogo(
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "categoriaId", required = false) Integer categoriaId,
+            @RequestParam(name = "disponibilidad", required = false) String disponibilidad,
+            @RequestParam(name = "actualizado", required = false) Boolean actualizado,
+            @RequestParam(name = "eliminado", required = false) Boolean eliminado,
+            @RequestParam(name = "error", required = false) String error,
+            Model model) {
+
+        List<Libro> todosLosLibros = libroService.listarTodos();
+        List<Libro> libros;
+
+        if (query != null && !query.trim().isEmpty()) {
+            libros = libroService.buscarPorFiltros(query.trim());
+        } else {
+            libros = new ArrayList<>(todosLosLibros);
+        }
+
+        if (categoriaId != null && categoriaId > 0) {
+            libros = libros.stream()
+                    .filter(l -> l.getCategorias() != null && l.getCategorias().stream().anyMatch(c -> c.getIdCategoria().equals(categoriaId)))
+                    .toList();
+        }
+
+        if ("disponibles".equalsIgnoreCase(disponibilidad)) {
+            libros = libros.stream()
+                    .filter(l -> l.getStockDisponible() != null && l.getStockDisponible() > 0)
+                    .toList();
+        } else if ("agotados".equalsIgnoreCase(disponibilidad)) {
+            libros = libros.stream()
+                    .filter(l -> l.getStockDisponible() == null || l.getStockDisponible() <= 0)
+                    .toList();
+        }
+
+        long totalLibros = todosLosLibros.size();
+        long totalEjemplares = todosLosLibros.stream().mapToLong(l -> l.getStockTotal() != null ? l.getStockTotal() : 0).sum();
+        long disponibles = todosLosLibros.stream().filter(l -> l.getStockDisponible() != null && l.getStockDisponible() > 0).count();
+        long sinStock = todosLosLibros.stream().filter(l -> l.getStockDisponible() == null || l.getStockDisponible() <= 0).count();
+
+        model.addAttribute("libros", libros);
+        model.addAttribute("categorias", categoriaService.listarCategorias());
+        model.addAttribute("autores", autorService.listarAutores());
+        model.addAttribute("query", query != null ? query : "");
+        model.addAttribute("categoriaSeleccionada", categoriaId);
+        model.addAttribute("disponibilidadSeleccionada", disponibilidad != null ? disponibilidad : "todos");
+        model.addAttribute("totalLibros", totalLibros);
+        model.addAttribute("totalEjemplares", totalEjemplares);
+        model.addAttribute("disponibles", disponibles);
+        model.addAttribute("sinStock", sinStock);
+        model.addAttribute("actualizado", actualizado != null && actualizado);
+        model.addAttribute("eliminado", eliminado != null && eliminado);
+        model.addAttribute("error", error);
+
+        return "admin-catalogo";
+    }
+
+    @PostMapping("/admin/catalogo/editar/{id}")
+    public String editarLibroAdmin(
+            @PathVariable Integer id,
+            @ModelAttribute Libro libroForm,
+            @RequestParam(name = "categoriaId", required = false) Integer categoriaId,
+            @RequestParam(name = "autorId", required = false) Integer autorId,
+            @RequestParam(name = "autorNombre", required = false) String autorNombre,
+            RedirectAttributes redirectAttributes) {
+        try {
+            if (categoriaId != null && categoriaId > 0) {
+                categoriaService.obtenerPorId(categoriaId).ifPresent(cat -> {
+                    libroForm.setCategorias(new ArrayList<>(List.of(cat)));
+                });
+            }
+
+            if (autorId != null && autorId > 0) {
+                autorService.obtenerPorId(autorId).ifPresent(aut -> {
+                    libroForm.setAutores(new ArrayList<>(List.of(aut)));
+                });
+            } else if (autorNombre != null && !autorNombre.trim().isEmpty()) {
+                String nombreCompleto = autorNombre.trim();
+                Autor autorObj = new Autor();
+                int lastSpace = nombreCompleto.lastIndexOf(" ");
+                if (lastSpace > 0) {
+                    autorObj.setNombres(nombreCompleto.substring(0, lastSpace));
+                    autorObj.setApellidos(nombreCompleto.substring(lastSpace + 1));
+                } else {
+                    autorObj.setNombres(nombreCompleto);
+                    autorObj.setApellidos("");
+                }
+                Autor autorGuardado = autorService.registrarAutor(autorObj);
+                libroForm.setAutores(new ArrayList<>(List.of(autorGuardado)));
+            }
+
+            if (libroForm.getStockTotal() != null && libroForm.getStockDisponible() != null) {
+                if (libroForm.getStockDisponible() > libroForm.getStockTotal()) {
+                    libroForm.setStockDisponible(libroForm.getStockTotal());
+                }
+            } else if (libroForm.getStockDisponible() == null && libroForm.getStockTotal() != null) {
+                libroForm.setStockDisponible(libroForm.getStockTotal());
+            }
+
+            libroService.actualizarLibro(id, libroForm);
+            redirectAttributes.addAttribute("actualizado", true);
+        } catch (Exception e) {
+            redirectAttributes.addAttribute("error", "Error al actualizar el libro: " + e.getMessage());
+        }
+        return "redirect:/admin/catalogo";
+    }
+
+    @PostMapping("/admin/catalogo/eliminar/{id}")
+    public String eliminarLibroAdminCatalogo(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            boolean eliminado = libroService.eliminarLibro(id);
+            if (eliminado) {
+                redirectAttributes.addAttribute("eliminado", true);
+            } else {
+                redirectAttributes.addAttribute("error", "No se encontró el libro solicitado para eliminar.");
+            }
+        } catch (Exception e) {
+            redirectAttributes.addAttribute("error", "No se puede dar de baja el libro porque posee registros históricos o activos de préstamos asociados.");
+        }
+        return "redirect:/admin/catalogo";
     }
 }

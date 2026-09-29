@@ -79,3 +79,110 @@ body {
 .navbar-wire { background: #ffffff; border-bottom: 2px solid #334155; padding: 0.6rem 1rem; }
 .nav-link-wire { font-weight: 600; color: #475569; text-decoration: none; padding: 0.4rem 0.8rem; border-bottom: 3px solid transparent; }
 .nav-link-wire.active { color: #0f172a; border-bottom: 3px solid #0f172a; }
+
+/* Badges de inventario y stock */
+.badge-stock-green {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1.5px solid #86efac;
+    padding: 0.25rem 0.65rem;
+    border-radius: 50rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-block;
+}
+.badge-stock-red {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1.5px solid #fca5a5;
+    padding: 0.25rem 0.65rem;
+    border-radius: 50rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-block;
+}
+.badge-stock-yellow {
+    background-color: #fef9c3;
+    color: #a16207;
+    border: 1.5px solid #fde047;
+    padding: 0.25rem 0.65rem;
+    border-radius: 50rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-block;
+}
+.badge-stock-blue {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1.5px solid #93c5fd;
+    padding: 0.25rem 0.65rem;
+    border-radius: 50rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* Tarjetas de catálogo y rejillas */
+.book-grid-card {
+    border: 2px solid #334155;
+    border-radius: 12px;
+    background: #ffffff;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.book-grid-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+/* Tablas con estilo wireframe */
+.table-wire {
+    border: 2px solid #334155;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.table-wire thead th {
+    background-color: #f1f5f9;
+    border-bottom: 2px solid #334155;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #1e293b;
+    padding: 0.75rem;
+}
+.table-wire tbody td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+/* Tabs administrativas */
+.admin-tab {
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #475569;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+.admin-tab.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+}
+
+/* Paginación wireframe */
+.pagination-wire .page-link {
+    color: #334155;
+    border: 1.5px solid #cbd5e1;
+    font-weight: 600;
+}
+.pagination-wire .page-item.active .page-link {
+    background-color: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+}
+

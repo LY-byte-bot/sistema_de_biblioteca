@@ -24,7 +24,8 @@
                 <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
                 <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
                 <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
-                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/catalogo}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light py-0 px-2">7.7b Catalogación</a>
                 <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
             </div>
         </div>
@@ -48,10 +49,13 @@
                 <a th:href="@{/prestamos}" class="nav-link-wire">Mis Préstamos y Multas</a>
             </div>
 
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
                 <span class="small fw-semibold text-dark">
                     <i class="bi bi-person-fill me-1"></i> Ivan Mamani (Lector)
                 </span>
+                <a th:href="@{/admin/catalogo}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Ingresar como Administrador para editar/eliminar">
+                    <i class="bi bi-shield-lock-fill text-primary me-1"></i> Modo Admin
+                </a>
                 <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
             </div>
         </div>

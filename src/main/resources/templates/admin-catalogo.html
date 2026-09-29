@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Libros (Admin) - Biblioteca Académica del Sur</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-light">
+
+    <!-- Barra Superior de Demostración Rápida -->
+    <nav class="navbar navbar-dark bg-dark py-1 px-3 d-print-none text-white small">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <span class="text-warning fw-semibold">
+                <i class="bi bi-mortarboard-fill me-1"></i> UTP - Marcos de Desarrollo Web (Thymeleaf + Bootstrap)
+            </span>
+            <div class="btn-group btn-group-sm">
+                <a th:href="@{/login}" class="btn btn-outline-light py-0 px-2">7.1 Login</a>
+                <a th:href="@{/registro}" class="btn btn-outline-light py-0 px-2">7.2 Registro</a>
+                <a th:href="@{/catalogo}" class="btn btn-outline-light py-0 px-2">7.3 Catálogo (Lector)</a>
+                <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
+                <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
+                <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
+                <a th:href="@{/admin/catalogo}" class="btn btn-outline-light active py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light py-0 px-2">7.7b Catalogación</a>
+                <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- BARRA DE NAVEGACIÓN ADMINISTRATIVA (MODO ADMINISTRADOR) -->
+    <header class="navbar-wire sticky-top">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="brand-books">
+                    <span class="book-red"></span>
+                    <span class="book-yellow"></span>
+                    <span class="book-green"></span>
+                    <span class="book-blue"></span>
+                </div>
+                <div>
+                    <span class="fw-bold fs-5 text-dark">Panel Admin - Biblioteca Académica</span>
+                    <span class="badge bg-dark-subtle text-dark border ms-2 small">Gestión Integral</span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 my-2 my-md-0">
+                <a th:href="@{/admin/catalogo}" class="nav-link-wire active">
+                    <i class="bi bi-grid-3x3-gap-fill me-1"></i> Catálogo de Libros
+                </a>
+                <a th:href="@{/admin/prestamos}" class="nav-link-wire">
+                    <i class="bi bi-whatsapp me-1"></i> Control de Préstamos
+                </a>
+                <a th:href="@{/admin/catalogacion}" class="nav-link-wire">
+                    <i class="bi bi-plus-circle me-1"></i> Registrar &amp; Catalogar
+                </a>
+                <a th:href="@{/admin/telemetria}" class="nav-link-wire">
+                    <i class="bi bi-speedometer2 me-1"></i> Telemetría Actuator
+                </a>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="small fw-semibold text-dark">
+                    <i class="bi bi-shield-lock-fill me-1 text-primary"></i> Bibliotecario (Administrador)
+                </span>
+                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL: CATÁLOGO DE LIBROS (ADMINISTRADOR) -->
+    <main class="container py-4">
+
+        <!-- Banner Exclusivo de Privilegios de Administrador -->
+        <div class="wire-card p-3 p-md-4 mb-4 bg-white">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-primary text-white px-2 py-1">
+                            <i class="bi bi-shield-shaded me-1"></i> MÓDULO ADMINISTRADOR
+                        </span>
+                        <span class="text-muted small">Privilegios de Edición y Eliminación Activados</span>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-1">Catálogo General de Libros e Inventario</h4>
+                    <p class="text-muted small mb-0">
+                        Como administrador, puedes explorar todos los títulos del fondo bibliográfico, actualizar sus datos técnicos (título, autor, ISBN, editorial, stock disponible) y dar de baja ejemplares definitivamente.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end d-flex flex-wrap justify-content-lg-end gap-2">
+                    <a th:href="@{/admin/catalogacion(tab='formulario')}" class="btn btn-wire-green">
+                        <i class="bi bi-plus-lg me-1"></i> Nuevo Libro
+                    </a>
+                    <a th:href="@{/catalogo}" target="_blank" class="btn btn-wire-outline">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Ver como Lector
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas de Retroalimentación de Operaciones -->
+        <div th:if="${actualizado}" class="alert alert-success alert-dismissible fade show wire-card p-3 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill fs-4 text-success me-2"></i>
+                <div>
+                    <strong>¡Modificación Exitosa!</strong> El libro ha sido actualizado correctamente en el catálogo bibliográfico.
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+
+        <div th:if="${eliminado}" class="alert alert-warning alert-dismissible fade show wire-card p-3 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-trash3-fill fs-4 text-warning me-2"></i>
+                <div>
+                    <strong>¡Libro Dado de Baja!</strong> El ejemplar ha sido eliminado y retirado permanentemente del catálogo.
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show wire-card p-3 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-4 text-danger me-2"></i>
+                <div>
+                    <strong>Atención:</strong> <span th:text="${error}">Ocurrió un error al procesar la solicitud.</span>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+
+        <!-- Tarjetas de Métricas de Inventario (KPIs de Administración) -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-lg-3">
+                <div class="wire-card p-3 bg-white">
+                    <div class="text-muted small fw-bold text-uppercase mb-1">
+                        <i class="bi bi-book-half text-primary me-1"></i> Títulos Registrados
+                    </div>
+                    <div class="fs-3 fw-bold text-dark" th:text="${totalLibros}">0</div>
+                    <div class="text-muted small">Títulos en base de datos</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="wire-card p-3 bg-white">
+                    <div class="text-muted small fw-bold text-uppercase mb-1">
+                        <i class="bi bi-collection text-info me-1"></i> Ejemplares Físicos
+                    </div>
+                    <div class="fs-3 fw-bold text-dark" th:text="${totalEjemplares}">0</div>
+                    <div class="text-muted small">Copias totales de acervo</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="wire-card p-3 bg-white">
+                    <div class="text-muted small fw-bold text-uppercase mb-1">
+                        <i class="bi bi-check2-circle text-success me-1"></i> Disponibles en Sala
+                    </div>
+                    <div class="fs-3 fw-bold text-success" th:text="${disponibles}">0</div>
+                    <div class="text-muted small">Listos para préstamo</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="wire-card p-3 bg-white">
+                    <div class="text-muted small fw-bold text-uppercase mb-1">
+                        <i class="bi bi-exclamation-circle text-danger me-1"></i> Sin Stock / Agotados
+                    </div>
+                    <div class="fs-3 fw-bold text-danger" th:text="${sinStock}">0</div>
+                    <div class="text-muted small">Requieren adquisición</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros y Búsqueda para el Administrador -->
+        <div class="wire-card p-3 p-md-4 mb-4">
+            <form th:action="@{/admin/catalogo}" method="get">
+                <div class="row g-3 align-items-center">
+                    <!-- Campo de búsqueda -->
+                    <div class="col-md-6 col-lg-5">
+                        <label class="form-label fw-bold small text-dark mb-1">Búsqueda Rápida:</label>
+                        <div class="input-group">
+                            <input type="text" name="query" th:value="${query}" class="form-control" placeholder="Buscar por título, autor, ISBN, editorial...">
+                            <button class="btn btn-wire-yellow px-3" type="submit">
+                                <i class="bi bi-search me-1"></i> Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtro por Categoría -->
+                    <div class="col-md-3 col-lg-3">
+                        <label class="form-label fw-bold small text-dark mb-1">Filtrar Categoría:</label>
+                        <select name="categoriaId" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todas las Categorías</option>
+                            <option th:each="cat : ${categorias}" 
+                                    th:value="${cat.idCategoria}" 
+                                    th:text="${cat.nombre}"
+                                    th:selected="${categoriaSeleccionada != null and categoriaSeleccionada == cat.idCategoria}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Disponibilidad -->
+                    <div class="col-md-3 col-lg-2">
+                        <label class="form-label fw-bold small text-dark mb-1">Disponibilidad:</label>
+                        <select name="disponibilidad" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="todos" th:selected="${disponibilidadSeleccionada == 'todos'}">Todos los estados</option>
+                            <option value="disponibles" th:selected="${disponibilidadSeleccionada == 'disponibles'}">Solo Disponibles (&gt;0)</option>
+                            <option value="agotados" th:selected="${disponibilidadSeleccionada == 'agotados'}">Agotados (0 copias)</option>
+                        </select>
+                    </div>
+
+                    <!-- Botón para Limpiar Filtros -->
+                    <div class="col-lg-2 d-flex align-items-end">
+                        <a th:href="@{/admin/catalogo}" class="btn btn-sm btn-wire-outline w-100 py-2">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Barra de Control de Resultados y Selector de Vistas -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">
+                    Libros en Catálogo: 
+                    <span class="text-primary"><span th:text="${libros.size()}">0</span> títulos encontrados</span>
+                </h5>
+                <span class="text-muted small" th:if="${query != ''}">
+                    Filtro activo para: "<strong><span th:text="${query}"></span></strong>"
+                </span>
+            </div>
+
+            <!-- Botones para alternar entre Vista Cuadrícula y Vista Tabla -->
+            <ul class="nav nav-pills" id="adminViewTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-1 px-3 small fw-bold" id="grid-view-tab" data-bs-toggle="pill" data-bs-target="#grid-view" type="button" role="tab">
+                        <i class="bi bi-grid-fill me-1"></i> Cuadrícula
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-1 px-3 small fw-bold" id="table-view-tab" data-bs-toggle="pill" data-bs-target="#table-view" type="button" role="tab">
+                        <i class="bi bi-table me-1"></i> Tabla Detallada
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Estado Vacío si no hay resultados -->
+        <div th:if="${libros.isEmpty()}" class="wire-card p-5 text-center my-4 bg-white">
+            <i class="bi bi-journal-x fs-1 text-muted d-block mb-3"></i>
+            <h5 class="fw-bold text-dark">No se encontraron libros en el catálogo</h5>
+            <p class="text-muted small mb-3">
+                No hay registros que coincidan con los criterios de búsqueda o filtros seleccionados.
+            </p>
+            <div class="d-flex justify-content-center gap-2">
+                <a th:href="@{/admin/catalogo}" class="btn btn-sm btn-wire-outline">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Restablecer Filtros
+                </a>
+                <a th:href="@{/admin/catalogacion(tab='formulario')}" class="btn btn-sm btn-wire-green">
+                    <i class="bi bi-plus-lg me-1"></i> Registrar Primer Libro
+                </a>
+            </div>
+        </div>
+
+        <!-- CONTENEDOR DE PESTAÑAS (CUADRÍCULA / TABLA) -->
+        <div th:unless="${libros.isEmpty()}" class="tab-content" id="adminViewTabsContent">
+
+            <!-- ======================================================== -->
+            <!-- 1. VISTA CUADRÍCULA (CARDS CON ACCIONES ADMINISTRADOR)   -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade show active" id="grid-view" role="tabpanel">
+                <div class="row g-4 mb-4">
+                    <div th:each="libro : ${libros}" class="col-md-6 col-lg-4">
+                        <div class="book-grid-card p-3">
+                            
+                            <div>
+                                <div class="row g-2 mb-2">
+                                    <!-- Portada estilo Wireframe -->
+                                    <div class="col-5">
+                                        <div class="book-cover-placeholder">
+                                            <span class="cover-text">PORTADA DEL LIBRO</span>
+                                        </div>
+                                        <div class="text-center mt-2">
+                                            <span class="badge bg-light text-dark border small py-1 px-2" style="font-size: 0.7rem;">
+                                                ID #<span th:text="${libro.idLibro}">1</span>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Datos bibliográficos del libro -->
+                                    <div class="col-7">
+                                        <h6 class="fw-bold text-dark mb-1 lh-sm" th:text="${libro.titulo}">Título del Libro</h6>
+                                        
+                                        <p class="text-muted small mb-1">
+                                            <strong>Autor:</strong>
+                                            <span th:if="${libro.autores != null and !libro.autores.isEmpty()}">
+                                                <span th:each="autor, iterStat : ${libro.autores}">
+                                                    <span th:text="${autor.nombres + ' ' + (autor.apellidos ?: '')}"></span><span th:if="${!iterStat.last}">, </span>
+                                                </span>
+                                            </span>
+                                            <span th:unless="${libro.autores != null and !libro.autores.isEmpty()}">Varios Autores</span>
+                                        </p>
+
+                                        <p class="text-muted small mb-1">
+                                            <strong>Categoría:</strong>
+                                            <span th:if="${libro.categorias != null and !libro.categorias.isEmpty()}" th:text="${libro.categorias[0].nombre}">Ingeniería</span>
+                                            <span th:unless="${libro.categorias != null and !libro.categorias.isEmpty()}">General</span>
+                                        </p>
+
+                                        <p class="text-muted small mb-1">
+                                            <strong>Editorial:</strong> <span th:text="${libro.editorial ?: 'Sin registrar'}">Editorial</span>
+                                        </p>
+
+                                        <p class="text-muted small mb-0">
+                                            <strong>Año:</strong> <span th:text="${libro.anioPublicacion ?: 2024}">2024</span> | 
+                                            <strong>ISBN:</strong> <span th:text="${libro.isbn}">978-0134757599</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Resumen / Sinopsis del libro -->
+                                <div class="notice-box-blue py-1 px-2 my-2 small" style="font-size: 0.78rem;">
+                                    <strong>Resumen:</strong> 
+                                    "<span th:text="${libro.resumen != null ? #strings.abbreviate(libro.resumen, 85) : 'Sin sinopsis registrada.'}">Texto descriptivo del libro...</span>"
+                                </div>
+                            </div>
+
+                            <!-- Estado de Stock e Información de Almacén -->
+                            <div class="pt-2 border-top mt-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small fw-semibold text-muted">Stock en Sistema:</span>
+                                    <div>
+                                        <span th:if="${libro.stockDisponible != null and libro.stockDisponible > 0}" class="badge-stock-green">
+                                            <span th:text="${libro.stockDisponible}">0</span> / <span th:text="${libro.stockTotal ?: 0}">0</span> Disp.
+                                        </span>
+                                        <span th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" class="badge-stock-red">
+                                            0 / <span th:text="${libro.stockTotal ?: 0}">0</span> (Agotado)
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- BOTONES DE ACCIÓN EXCLUSIVOS DEL ADMINISTRADOR -->
+                                <div class="d-flex gap-2">
+                                    <!-- Botón Editar Libro (Abre Modal) -->
+                                    <button type="button" 
+                                            class="btn btn-sm btn-wire-blue flex-fill" 
+                                            data-bs-toggle="modal" 
+                                            th:data-bs-target="'#modalEditar' + ${libro.idLibro}">
+                                        <i class="bi bi-pencil-square me-1"></i> Editar
+                                    </button>
+
+                                    <!-- Botón Eliminar Libro (Abre Modal de Confirmación) -->
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger fw-bold flex-fill" 
+                                            data-bs-toggle="modal" 
+                                            th:data-bs-target="'#modalEliminar' + ${libro.idLibro}">
+                                        <i class="bi bi-trash3-fill me-1"></i> Eliminar
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- 2. VISTA TABLA DETALLADA (GESTIÓN ADMINISTRATIVA)        -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="table-view" role="tabpanel">
+                <div class="wire-card p-3 p-md-4 mb-4">
+                    <div class="table-responsive">
+                        <table class="table table-wire text-center align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th># ID</th>
+                                    <th class="text-start">Título &amp; Autor</th>
+                                    <th>ISBN</th>
+                                    <th>Categoría</th>
+                                    <th>Editorial &amp; Año</th>
+                                    <th>Stock Total</th>
+                                    <th>Disponible</th>
+                                    <th>Acciones Administrador</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="libro, iterStat : ${libros}">
+                                    <td class="fw-bold" th:text="${libro.idLibro}">1</td>
+                                    <td class="text-start">
+                                        <div class="fw-bold text-dark" th:text="${libro.titulo}">Título del Libro</div>
+                                        <div class="text-muted small">
+                                            <span th:if="${libro.autores != null and !libro.autores.isEmpty()}">
+                                                <i class="bi bi-person me-1"></i>
+                                                <span th:each="a, iStat : ${libro.autores}">
+                                                    <span th:text="${a.nombres + ' ' + (a.apellidos ?: '')}"></span><span th:if="${!iStat.last}">, </span>
+                                                </span>
+                                            </span>
+                                            <span th:unless="${libro.autores != null and !libro.autores.isEmpty()}">Autor no especificado</span>
+                                        </div>
+                                    </td>
+                                    <td><code th:text="${libro.isbn}">978-0134757599</code></td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary border" 
+                                              th:if="${libro.categorias != null and !libro.categorias.isEmpty()}" 
+                                              th:text="${libro.categorias[0].nombre}">Categoría</span>
+                                        <span class="badge bg-light text-muted border" 
+                                              th:unless="${libro.categorias != null and !libro.categorias.isEmpty()}">General</span>
+                                    </td>
+                                    <td class="small">
+                                        <div th:text="${libro.editorial ?: 'Sin editorial'}">Editorial</div>
+                                        <div class="text-muted" th:text="${libro.anioPublicacion ?: 2024}">2024</div>
+                                    </td>
+                                    <td class="fw-bold" th:text="${libro.stockTotal ?: 0}">5</td>
+                                    <td>
+                                        <span th:if="${libro.stockDisponible != null and libro.stockDisponible > 0}" class="badge-stock-green">
+                                            <span th:text="${libro.stockDisponible}">0</span> en sala
+                                        </span>
+                                        <span th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" class="badge-stock-red">
+                                            0 agotado
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" 
+                                                    class="btn btn-wire-blue" 
+                                                    title="Editar este libro"
+                                                    data-bs-toggle="modal" 
+                                                    th:data-bs-target="'#modalEditar' + ${libro.idLibro}">
+                                                <i class="bi bi-pencil-square"></i> Editar
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger" 
+                                                    title="Dar de baja y eliminar"
+                                                    data-bs-toggle="modal" 
+                                                    th:data-bs-target="'#modalEliminar' + ${libro.idLibro}">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- MODALES DE EDICIÓN Y ELIMINACIÓN PARA CADA LIBRO         -->
+        <!-- ======================================================== -->
+        <div th:each="libro : ${libros}">
+
+            <!-- MODAL DE EDICIÓN -->
+            <div class="modal fade" th:id="'modalEditar' + ${libro.idLibro}" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content wire-card border-2">
+                        
+                        <div class="modal-header bg-light border-bottom">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary text-white">ADMIN</span>
+                                <h5 class="modal-title fw-bold text-dark mb-0">
+                                    <i class="bi bi-pencil-square text-primary me-1"></i> Editar Libro (ID #<span th:text="${libro.idLibro}"></span>)
+                                </h5>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <form th:action="@{'/admin/catalogo/editar/' + ${libro.idLibro}}" method="post">
+                            <div class="modal-body p-4">
+
+                                <div class="notice-box-blue p-2 mb-3 small">
+                                    <i class="bi bi-info-circle-fill me-1"></i> 
+                                    Modifica los datos bibliográficos y disponibilidad. Los cambios se reflejarán instantáneamente en la vista de los lectores.
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <!-- Título -->
+                                    <div class="col-md-8">
+                                        <label class="form-label small fw-bold text-dark">Título del Libro: *</label>
+                                        <input type="text" name="titulo" th:value="${libro.titulo}" class="form-control" required>
+                                    </div>
+                                    <!-- ISBN -->
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-dark">ISBN: *</label>
+                                        <input type="text" name="isbn" th:value="${libro.isbn}" class="form-control" required>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <!-- Categoría -->
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Categoría Temática:</label>
+                                        <select name="categoriaId" class="form-select">
+                                            <option value="">-- Conservar / Seleccionar Categoría --</option>
+                                            <option th:each="cat : ${categorias}" 
+                                                    th:value="${cat.idCategoria}" 
+                                                    th:text="${cat.nombre}"
+                                                    th:selected="${libro.categorias != null and !libro.categorias.isEmpty() and libro.categorias[0].idCategoria == cat.idCategoria}">
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Autor -->
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Autor(es):</label>
+                                        <input type="text" name="autorNombre" 
+                                               th:value="${libro.autores != null and !libro.autores.isEmpty() ? (libro.autores[0].nombres + ' ' + (libro.autores[0].apellidos ?: '')) : ''}" 
+                                               class="form-control" 
+                                               placeholder="Ej. Robert C. Martin">
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <!-- Editorial -->
+                                    <div class="col-md-5">
+                                        <label class="form-label small fw-bold text-dark">Editorial:</label>
+                                        <input type="text" name="editorial" th:value="${libro.editorial}" class="form-control" placeholder="Ej. Prentice Hall">
+                                    </div>
+                                    <!-- Año de Publicación -->
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold text-dark">Año de Publicación:</label>
+                                        <input type="number" name="anioPublicacion" th:value="${libro.anioPublicacion ?: 2024}" class="form-control" min="1900" max="2099">
+                                    </div>
+                                    <!-- Idioma -->
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-dark">Idioma:</label>
+                                        <input type="text" name="idioma" th:value="${libro.idioma ?: 'Español'}" class="form-control" placeholder="Español, Inglés...">
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <!-- Stock Total -->
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Stock Total Físico (Ejemplares): *</label>
+                                        <input type="number" name="stockTotal" th:value="${libro.stockTotal ?: 1}" class="form-control" min="0" required>
+                                        <div class="form-text small">Cantidad física de libros pertenecientes a la biblioteca.</div>
+                                    </div>
+                                    <!-- Stock Disponible -->
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-dark">Stock Disponible en Sala: *</label>
+                                        <input type="number" name="stockDisponible" th:value="${libro.stockDisponible ?: 1}" class="form-control" min="0" required>
+                                        <div class="form-text small">Copias disponibles para préstamo inmediato a lectores.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Resumen / Sinopsis -->
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold text-dark">Resumen / Sinopsis Técnica:</label>
+                                    <textarea name="resumen" rows="3" class="form-control" placeholder="Descripción resumida del material..." th:text="${libro.resumen}"></textarea>
+                                </div>
+
+                            </div>
+
+                            <div class="modal-footer bg-light border-top">
+                                <button type="button" class="btn btn-wire-outline" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-wire-blue px-4">
+                                    <i class="bi bi-save me-1"></i> Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN -->
+            <div class="modal fade" th:id="'modalEliminar' + ${libro.idLibro}" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content wire-card border-danger">
+                        
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmar Baja del Libro
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <form th:action="@{'/admin/catalogo/eliminar/' + ${libro.idLibro}}" method="post">
+                            <div class="modal-body p-4 text-center">
+                                <i class="bi bi-trash3 text-danger display-4 d-block mb-3"></i>
+                                
+                                <h5 class="fw-bold text-dark mb-2">¿Dar de baja este libro?</h5>
+                                
+                                <p class="text-muted small mb-3">
+                                    Estás a punto de retirar del catálogo el siguiente ejemplar:
+                                </p>
+
+                                <div class="p-3 bg-light rounded-3 border text-start mb-3">
+                                    <div class="fw-bold text-dark" th:text="${libro.titulo}">Título del Libro</div>
+                                    <div class="small text-muted"><strong>ISBN:</strong> <span th:text="${libro.isbn}"></span></div>
+                                    <div class="small text-muted"><strong>Ejemplares en sistema:</strong> <span th:text="${libro.stockTotal}"></span></div>
+                                </div>
+
+                                <div class="notice-box-yellow small text-start">
+                                    <i class="bi bi-shield-exclamation text-warning me-1"></i>
+                                    <strong>Operación exclusiva de Administrador:</strong> Esta acción eliminará el registro bibliográfico del sistema. Si el libro tiene préstamos activos, la base de datos protegerá la integridad del registro.
+                                </div>
+                            </div>
+
+                            <div class="modal-footer bg-light border-top d-flex justify-content-between">
+                                <button type="button" class="btn btn-wire-outline" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-danger fw-bold px-4">
+                                    <i class="bi bi-trash3-fill me-1"></i> Sí, Eliminar Definitivamente
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

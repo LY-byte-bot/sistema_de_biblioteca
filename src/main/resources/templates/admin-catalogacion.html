@@ -24,7 +24,8 @@
                 <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
                 <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
                 <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
-                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light active py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/catalogo}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
+                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light active py-0 px-2">7.7b Catalogación</a>
                 <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
             </div>
         </div>
@@ -44,6 +45,7 @@
             </div>
 
             <div class="d-flex align-items-center gap-2 my-2 my-md-0">
+                <a th:href="@{/admin/catalogo}" class="nav-link-wire">Catálogo de Libros</a>
                 <a th:href="@{/admin/prestamos}" class="nav-link-wire">Control de Préstamos &amp; WhatsApp</a>
                 <a th:href="@{/admin/catalogacion}" class="nav-link-wire active">Catalogación &amp; Gestión</a>
                 <a th:href="@{/admin/telemetria}" class="nav-link-wire">Telemetría Actuator</a>
@@ -211,12 +213,17 @@
                                 </span>
                             </td>
                             <td>
-                                <!-- Formulario de eliminación para dar de baja libro -->
-                                <form th:action="@{'/admin/libros/eliminar/' + ${l.idLibro}}" method="post" onsubmit="return confirm('¿Está seguro de dar de baja este libro del catálogo?');" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-danger fw-bold" title="Dar de baja y retirar del catálogo">
-                                        <i class="bi bi-trash3-fill me-1"></i> Dar de Baja
-                                    </button>
-                                </form>
+                                <div class="d-flex justify-content-center gap-1">
+                                    <a th:href="@{/admin/catalogo(query=${l.titulo})}" class="btn btn-sm btn-wire-blue" title="Gestionar y Editar en Catálogo Admin">
+                                        <i class="bi bi-pencil-square me-1"></i> Editar
+                                    </a>
+                                    <!-- Formulario de eliminación para dar de baja libro -->
+                                    <form th:action="@{'/admin/libros/eliminar/' + ${l.idLibro}}" method="post" onsubmit="return confirm('¿Está seguro de dar de baja este libro del catálogo?');" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger fw-bold" title="Dar de baja y retirar del catálogo">
+                                            <i class="bi bi-trash3-fill me-1"></i> Dar de Baja
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

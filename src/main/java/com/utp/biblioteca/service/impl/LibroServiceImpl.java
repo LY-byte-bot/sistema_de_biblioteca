@@ -50,10 +50,10 @@ public class LibroServiceImpl implements LibroService {
             libroExistente.setStockTotal(libroActualizado.getStockTotal());
             libroExistente.setStockDisponible(libroActualizado.getStockDisponible());
 
-            if (libroActualizado.getAutores() != null) {
+            if (libroActualizado.getAutores() != null && !libroActualizado.getAutores().isEmpty()) {
                 libroExistente.setAutores(libroActualizado.getAutores());
             }
-            if (libroActualizado.getCategorias() != null) {
+            if (libroActualizado.getCategorias() != null && !libroActualizado.getCategorias().isEmpty()) {
                 libroExistente.setCategorias(libroActualizado.getCategorias());
             }
             if (libroActualizado.getContenidosDigitales() != null) {
