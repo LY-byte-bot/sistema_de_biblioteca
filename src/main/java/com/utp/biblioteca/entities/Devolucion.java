@@ -2,6 +2,7 @@ package com.utp.biblioteca.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,9 +30,11 @@ public class Devolucion {
     @Column(name = "estado_ejemplar", length = 50)
     private String estadoEjemplar;
 
+    @PositiveOrZero(message = "Los días de retraso no pueden ser negativos")
     @Column(name = "dias_retraso")
     private Integer diasRetraso;
 
+    @PositiveOrZero(message = "El monto de multa no puede ser negativo")
     @Column(name = "monto_multa", precision = 10, scale = 2)
     private BigDecimal montoMulta;
 

@@ -1,6 +1,10 @@
 package com.utp.biblioteca.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,12 +25,18 @@ public class Usuario {
     @Column(name = "id_usuario")
     private Integer idUsuario;
 
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
     @Column(name = "nombre", nullable = false, length = 150)
     private String nombre;
 
+    @NotBlank(message = "El correo es obligatorio")
+    @Email(message = "Formato de correo inválido")
     @Column(name = "correo", nullable = false, unique = true, length = 150)
     private String correo;
 
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Size(min = 6, message = "Mínimo 6 caracteres")
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
@@ -42,6 +52,8 @@ public class Usuario {
     @Column(name = "direccion", length = 255)
     private String direccion;
 
+    @NotBlank(message = "El DNI es obligatorio")
+    @Pattern(regexp = "\\d{8}", message = "El DNI debe tener 8 dígitos numéricos")
     @Column(name = "dni", unique = true, length = 20)
     private String dni;
 
