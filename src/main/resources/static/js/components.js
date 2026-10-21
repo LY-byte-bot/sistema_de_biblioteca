@@ -105,10 +105,11 @@ const VistaLogin = {
     </div>`
 };
 
-// 4. Componente 7.2: Registro (Formulario automático compacto con campos 100% vacíos)
+// 4. Componente 7.2: Registro (Formulario automático compacto con campos 100% vacíos y Alertas de Validación)
 const VistaRegistro = {
     emits: ['navegar', 'registro'],
     data: () => ({
+        errores: [],
         form: { nombres: '', apellidos: '', dni: '', telefono: '', correo: '', password: '', confirmPassword: '', terminos: false },
         campos: [
             { key: 'nombres', label: 'Nombres:', ph: 'Ingresa tus nombres', col: 6 },
@@ -120,6 +121,22 @@ const VistaRegistro = {
             { key: 'confirmPassword', label: 'Confirmar Contraseña:', ph: 'Repite tu contraseña', col: 6, type: 'password' }
         ]
     }),
+    methods: {
+        enviarRegistro() {
+            this.errores = [];
+            if (this.form.password && this.form.confirmPassword && this.form.password !== this.form.confirmPassword) {
+                this.errores = ['Las contraseñas no coinciden'];
+                return;
+            }
+            this.$emit('registro', { ...this.form }, (errs) => {
+                if (errs && errs.length) {
+                    this.errores = Array.isArray(errs) ? errs : [errs];
+                } else {
+                    this.errores = [];
+                }
+            });
+        }
+    },
     template: `
     <div class="container py-5 d-flex justify-content-center">
         <div class="wire-card p-4 p-md-5 col-md-7 col-lg-6">
@@ -132,7 +149,15 @@ const VistaRegistro = {
             </div>
             <div class="wire-header-line mb-4"></div>
 
-            <form @submit.prevent="$emit('registro', form)">
+            <!-- Alerta Reactiva de Errores devueltos por Spring Validator -->
+            <div v-if="errores.length" class="alert alert-danger py-2 small mb-3">
+                <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Por favor corrige los siguientes errores:</div>
+                <ul class="mb-0 ps-3">
+                    <li v-for="(err, idx) in errores" :key="idx">{{ err }}</li>
+                </ul>
+            </div>
+
+            <form @submit.prevent="enviarRegistro">
                 <div class="row g-3 mb-3">
                     <div v-for="c in campos" :key="c.key" :class="'col-md-' + c.col">
                         <label class="form-label fw-bold small">{{ c.label }}</label>
@@ -439,33 +464,108 @@ const VistaAdminPrestamos = {
     </div>`
 };
 
-// 9. Componente 7.7: Admin Catalogación (Con tabla para Quitar/Eliminar Libros)
+// 9. Componente 7.7: Admin Catalogación (Con Registro, Edición y Dar de Baja con Alertas de Validación)
 const VistaAdminCatalogacion = {
     props: ['libros'],
-    emits: ['guardar-libro', 'eliminar-libro'],
+    emits: ['guardar-libro', 'editar-libro', 'eliminar-libro'],
     data: () => ({
         tab: 'formulario',
-        nuevo: { titulo: 'Sistemas Distribuidos', autores: 'Andrew S. Tanenbaum', isbn: '978-0132392273', categoria: 'Redes', editorial: 'Pearson - 2023', stockTotal: 5, ubicacion: 'B-08', resumen: 'Texto sobre arquitectura de sistemas distribuidos...' },
+        modoEdicion: false,
+        errores: [],
+        nuevo: { titulo: 'Sistemas Distribuidos', autores: 'Andrew S. Tanenbaum', isbn: '978-0132392273', categoria: 'Redes', editorial: 'Pearson - 2023', stockTotal: 5, stockDisponible: 5, ubicacion: 'B-08', resumen: 'Texto sobre arquitectura de sistemas distribuidos...' },
         campos: [
             { key: 'titulo', label: 'Título:', col: 5 },
             { key: 'autores', label: 'Autor(es):', col: 4 },
             { key: 'isbn', label: 'ISBN:', col: 3 },
             { key: 'categoria', label: 'Categoría:', col: 4 },
             { key: 'editorial', label: 'Editorial y Año:', col: 4 },
-            { key: 'stockTotal', label: 'Ejemplares:', col: 2, type: 'number' },
+            { key: 'stockTotal', label: 'Ejemplares (Stock Total):', col: 2, type: 'number' },
             { key: 'ubicacion', label: 'Ubicación:', col: 2 }
         ]
     }),
+    methods: {
+        iniciarEdicion(l) {
+            this.errores = [];
+            this.modoEdicion = true;
+            let autorTexto = '';
+            if (l.autores && Array.isArray(l.autores) && l.autores.length > 0) {
+                autorTexto = l.autores.map(a => `${a.nombres || ''} ${a.apellidos || ''}`.trim()).join(', ');
+            } else if (typeof l.autores === 'string') {
+                autorTexto = l.autores;
+            }
+            let categoriaTexto = '';
+            if (l.categorias && Array.isArray(l.categorias) && l.categorias.length > 0) {
+                categoriaTexto = l.categorias[0].nombre || '';
+            } else if (typeof l.categoria === 'string') {
+                categoriaTexto = l.categoria;
+            }
+
+            this.nuevo = {
+                idLibro: l.idLibro,
+                titulo: l.titulo || '',
+                autores: autorTexto,
+                isbn: l.isbn || '',
+                categoria: categoriaTexto,
+                editorial: l.editorial || '',
+                stockTotal: l.stockTotal || 1,
+                stockDisponible: l.stockDisponible !== undefined ? l.stockDisponible : (l.stockTotal || 1),
+                ubicacion: l.ubicacion || 'B-08',
+                resumen: l.resumen || ''
+            };
+            this.tab = 'formulario';
+        },
+        cancelarEdicion() {
+            this.modoEdicion = false;
+            this.errores = [];
+            this.nuevo = { titulo: '', autores: '', isbn: '', categoria: '', editorial: '', stockTotal: 1, stockDisponible: 1, ubicacion: 'B-08', resumen: '' };
+        },
+        enviarFormulario() {
+            this.errores = [];
+            const esEdicion = !!(this.modoEdicion || this.nuevo.idLibro);
+            const evento = esEdicion ? 'editar-libro' : 'guardar-libro';
+            this.$emit(evento, { ...this.nuevo }, (errs) => {
+                if (errs && errs.length) {
+                    this.errores = Array.isArray(errs) ? errs : [errs];
+                } else {
+                    this.errores = [];
+                    this.modoEdicion = false;
+                    this.nuevo = { titulo: '', autores: '', isbn: '', categoria: '', editorial: '', stockTotal: 1, stockDisponible: 1, ubicacion: 'B-08', resumen: '' };
+                    this.tab = 'inventario';
+                }
+            });
+        }
+    },
     template: `
     <div class="container py-4">
         <div class="d-flex gap-2 mb-4 p-2 bg-white rounded border">
-            <button @click="tab = 'formulario'" class="btn flex-fill" :class="tab === 'formulario' ? 'btn-wire-blue' : 'btn-light'"><i class="bi bi-plus-circle me-1"></i> 1. Registrar Nuevo Libro</button>
-            <button @click="tab = 'inventario'" class="btn flex-fill" :class="tab === 'inventario' ? 'btn-wire-blue' : 'btn-light'"><i class="bi bi-collection me-1"></i> 2. Inventario y Dar de Baja (Eliminar)</button>
+            <button @click="tab = 'formulario'" class="btn flex-fill" :class="tab === 'formulario' ? 'btn-wire-blue' : 'btn-light'">
+                <i class="bi bi-plus-circle me-1"></i> {{ modoEdicion ? '1. Modificar Libro Seleccionado' : '1. Registrar Nuevo Libro' }}
+            </button>
+            <button @click="tab = 'inventario'" class="btn flex-fill" :class="tab === 'inventario' ? 'btn-wire-blue' : 'btn-light'">
+                <i class="bi bi-collection me-1"></i> 2. Inventario y Dar de Baja (Eliminar)
+            </button>
         </div>
 
         <div v-if="tab === 'formulario'" class="wire-card p-4">
-            <h5 class="fw-bold mb-3">Registro de Nuevo Libro</h5>
-            <form @submit.prevent="$emit('guardar-libro', nuevo); tab = 'inventario';">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <span v-if="modoEdicion || nuevo.idLibro"><i class="bi bi-pencil-square text-primary me-1"></i> Modificar Libro (ID #{{ nuevo.idLibro }})</span>
+                    <span v-else><i class="bi bi-plus-circle me-1"></i> Registro de Nuevo Libro</span>
+                </h5>
+                <button v-if="modoEdicion || nuevo.idLibro" @click="cancelarEdicion" class="btn btn-sm btn-wire-outline">
+                    <i class="bi bi-x-circle me-1"></i> Cancelar Edición
+                </button>
+            </div>
+
+            <!-- Alerta Reactiva de Errores devueltos por Spring Validator -->
+            <div v-if="errores.length" class="alert alert-danger py-2 small mb-3">
+                <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Por favor corrige los siguientes errores:</div>
+                <ul class="mb-0 ps-3">
+                    <li v-for="(err, idx) in errores" :key="idx">{{ err }}</li>
+                </ul>
+            </div>
+
+            <form @submit.prevent="enviarFormulario">
                 <div class="row g-3 mb-3">
                     <div v-for="c in campos" :key="c.key" :class="'col-md-' + c.col">
                         <label class="form-label small fw-bold">{{ c.label }}</label>
@@ -480,24 +580,40 @@ const VistaAdminCatalogacion = {
                     <div><label class="small fw-bold">Archivo PDF para Búsqueda:</label><input type="file" class="form-control form-control-sm"></div>
                     <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Indexación automática al guardar.</span>
                 </div>
-                <button type="submit" class="btn btn-wire-blue py-2 px-4">💾 Guardar Libro</button>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-wire-blue py-2 px-4">
+                        <span v-if="modoEdicion || nuevo.idLibro">💾 Guardar Cambios</span>
+                        <span v-else>💾 Guardar Libro</span>
+                    </button>
+                    <button v-if="modoEdicion || nuevo.idLibro" type="button" @click="cancelarEdicion" class="btn btn-wire-outline py-2 px-3">
+                        Cancelar
+                    </button>
+                </div>
             </form>
         </div>
 
         <div v-if="tab === 'inventario'" class="wire-card p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">Inventario de Libros (Dar de Baja)</h5>
-                <button @click="tab = 'formulario'" class="btn btn-sm btn-wire-green"><i class="bi bi-plus-lg me-1"></i> Nuevo Libro</button>
+                <h5 class="fw-bold mb-0">Inventario de Libros (Gestión, Edición y Baja)</h5>
+                <button @click="cancelarEdicion(); tab = 'formulario';" class="btn btn-sm btn-wire-green"><i class="bi bi-plus-lg me-1"></i> Nuevo Libro</button>
             </div>
             <table class="table table-bordered text-center align-middle small mb-0">
                 <thead class="table-light"><tr><th>#</th><th>Título</th><th>ISBN</th><th>Stock</th><th>Acción</th></tr></thead>
                 <tbody>
-                    <tr v-for="(l, i) in libros" :key="l.isbn || i">
+                    <tr v-for="(l, i) in libros" :key="l.idLibro || l.isbn || i">
                         <td>{{ i + 1 }}</td>
                         <td class="text-start fw-bold">{{ l.titulo }}</td>
                         <td><code>{{ l.isbn }}</code></td>
                         <td>{{ l.stockDisponible }} en sala</td>
-                        <td><button @click="$emit('eliminar-libro', l)" class="btn btn-sm btn-danger fw-bold"><i class="bi bi-trash3-fill me-1"></i> Dar de Baja</button></td>
+                        <td>
+                            <!-- Botón Editar añadido junto a Dar de Baja -->
+                            <button @click="iniciarEdicion(l)" class="btn btn-sm btn-wire-blue me-1" title="Editar libro">
+                                <i class="bi bi-pencil-square me-1"></i> Editar
+                            </button>
+                            <button @click="$emit('eliminar-libro', l)" class="btn btn-sm btn-danger fw-bold" title="Dar de baja libro">
+                                <i class="bi bi-trash3-fill me-1"></i> Dar de Baja
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
