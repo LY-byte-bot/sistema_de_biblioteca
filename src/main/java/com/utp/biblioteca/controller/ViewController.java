@@ -48,8 +48,14 @@ public class ViewController {
             usuarioService.registrarUsuario(usuario);
             model.addAttribute("mensajeExito", "¡Registro exitoso! Ya puedes iniciar sesión con tu cuenta de lector.");
             return "login";
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
+            return "registro";
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            model.addAttribute("error", "Ya existe una cuenta registrada con este correo electrónico o DNI.");
+            return "registro";
+        } catch (Exception e) {
+            model.addAttribute("error", "No se pudo registrar: " + e.getMessage());
             return "registro";
         }
     }

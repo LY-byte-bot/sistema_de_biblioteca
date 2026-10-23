@@ -19,8 +19,15 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public Usuario registrarUsuario(Usuario usuario) {
-        if (usuarioRepository.existsByCorreo(usuario.getCorreo())) {
-            throw new IllegalArgumentException("Ya existe un usuario con el correo: " + usuario.getCorreo());
+        String correoLimpio = usuario.getCorreo() != null ? usuario.getCorreo().trim().toLowerCase() : "";
+        usuario.setCorreo(correoLimpio);
+
+        if (usuario.getDni() != null) {
+            usuario.setDni(usuario.getDni().trim());
+        }
+
+        if (usuarioRepository.existsByCorreoIgnoreCase(correoLimpio)) {
+            throw new IllegalArgumentException("Ya existe un usuario con el correo: " + correoLimpio);
         }
         if (usuario.getDni() != null && !usuario.getDni().isBlank() && usuarioRepository.existsByDni(usuario.getDni())) {
             throw new IllegalArgumentException("Ya existe un usuario con el DNI: " + usuario.getDni());
