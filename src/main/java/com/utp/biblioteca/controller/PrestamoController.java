@@ -6,12 +6,16 @@ import com.utp.biblioteca.entities.Devolucion;
 import com.utp.biblioteca.entities.Prestamo;
 import com.utp.biblioteca.service.DevolucionService;
 import com.utp.biblioteca.service.PrestamoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/prestamos")
@@ -23,7 +27,13 @@ public class PrestamoController {
     private final DevolucionService devolucionService;
 
     @PostMapping("/solicitar")
-    public ResponseEntity<?> solicitarPrestamo(@RequestBody PrestamoRequestDTO solicitud) {
+    public ResponseEntity<?> solicitarPrestamo(@Valid @RequestBody PrestamoRequestDTO solicitud, BindingResult result) {
+        if (result.hasErrors()) {
+            Map<String, String> errores = new HashMap<>();
+            result.getFieldErrors().forEach(err -> errores.put(err.getField(), err.getDefaultMessage()));
+            return ResponseEntity.badRequest().body(errores);
+        }
+
         try {
             Prestamo nuevoPrestamo = prestamoService.registrarPrestamo(solicitud);
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevoPrestamo);
@@ -40,7 +50,13 @@ public class PrestamoController {
     }
 
     @PostMapping("/devolver")
-    public ResponseEntity<?> devolverPrestamo(@RequestBody DevolucionRequestDTO solicitud) {
+    public ResponseEntity<?> devolverPrestamo(@Valid @RequestBody DevolucionRequestDTO solicitud, BindingResult result) {
+        if (result.hasErrors()) {
+            Map<String, String> errores = new HashMap<>();
+            result.getFieldErrors().forEach(err -> errores.put(err.getField(), err.getDefaultMessage()));
+            return ResponseEntity.badRequest().body(errores);
+        }
+
         try {
             Devolucion devolucion = devolucionService.procesarDevolucion(solicitud);
             return ResponseEntity.ok(devolucion);

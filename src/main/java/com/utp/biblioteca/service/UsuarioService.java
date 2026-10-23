@@ -10,5 +10,7 @@ public interface UsuarioService {
     Optional<Usuario> obtenerPorCorreo(String correo);
     Optional<Usuario> obtenerPorId(Integer id);
     List<Usuario> listarUsuarios();
+    Usuario actualizarUsuario(Integer id, Usuario usuarioActualizado);
+    boolean darDeBajaUsuario(Integer id);
 }
 
