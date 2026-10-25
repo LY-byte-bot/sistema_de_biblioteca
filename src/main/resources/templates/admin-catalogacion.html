@@ -11,26 +11,6 @@
 </head>
 <body class="bg-light">
 
-    <!-- Barra Superior de Demostración Rápida -->
-    <nav class="navbar navbar-dark bg-dark py-1 px-3 d-print-none text-white small">
-        <div class="container-fluid d-flex justify-content-between align-items-center">
-            <span class="text-warning fw-semibold">
-                <i class="bi bi-mortarboard-fill me-1"></i> UTP - Marcos de Desarrollo Web (Thymeleaf + Bootstrap)
-            </span>
-            <div class="btn-group btn-group-sm">
-                <a th:href="@{/login}" class="btn btn-outline-light py-0 px-2">7.1 Login</a>
-                <a th:href="@{/registro}" class="btn btn-outline-light py-0 px-2">7.2 Registro</a>
-                <a th:href="@{/catalogo}" class="btn btn-outline-light py-0 px-2">7.3 Catálogo</a>
-                <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
-                <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
-                <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
-                <a th:href="@{/admin/catalogo}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
-                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light active py-0 px-2">7.7b Catalogación</a>
-                <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
-            </div>
-        </div>
-    </nav>
-
     <!-- BARRA DE NAVEGACIÓN ADMINISTRATIVA -->
     <header class="navbar-wire sticky-top">
         <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
@@ -87,42 +67,34 @@
                     <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">1. Metadatos Bibliográficos Generales</h6>
                     
                     <div class="row g-3 mb-3">
-                        <div class="col-md-5">
-                            <label class="form-label small fw-bold text-dark">Título del Libro:</label>
-                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Sistemas Distribuidos: Principios y Paradigmas" value="Sistemas Distribuidos: Principios y Paradigmas" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold text-dark">Autor(es):</label>
-                            <input type="text" class="form-control" placeholder="Ej. Andrew S. Tanenbaum, Maarten van Steen" value="Andrew S. Tanenbaum, Maarten van Steen">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">Título del Libro: *</label>
+                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Clean Code" required>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-bold text-dark">ISBN:</label>
-                            <input type="text" name="isbn" class="form-control" placeholder="978-0132392273" value="978-0132392273" required>
+                            <label class="form-label small fw-bold text-dark">ISBN: *</label>
+                            <input type="text" name="isbn" class="form-control" placeholder="Ej. 978-0132350884" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-dark">Nº Ejemplares Físicos: *</label>
+                            <input type="number" name="stockTotal" min="1" class="form-control" placeholder="1" required>
                         </div>
                     </div>
 
                     <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold text-dark">Categoría:</label>
-                            <input type="text" class="form-control" placeholder="Ingeniería de Sistemas y Redes" value="Ingeniería de Sistemas y Redes">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">URL de Portada (Foto del Libro):</label>
+                            <input type="url" name="portadaUrl" class="form-control" placeholder="https://ejemplo.com/portada.jpg">
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold text-dark">Editorial y Año:</label>
-                            <input type="text" name="editorial" class="form-control" placeholder="Pearson Educación - 2023" value="Pearson Educación - 2023">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold text-dark">Nº Ejemplares Físicos:</label>
-                            <input type="number" name="stockTotal" min="1" class="form-control" value="5" required>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold text-dark">Ubicación Física:</label>
-                            <input type="text" class="form-control" placeholder="Estante B-08" value="Estante B-08">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark">Editorial:</label>
+                            <input type="text" name="editorial" class="form-control" placeholder="Ej. Prentice Hall">
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-dark">Sinopsis / Resumen Técnico:</label>
-                        <textarea name="resumen" class="form-control" rows="3" placeholder="Texto descriptivo y temático del material...">Texto fundamental sobre arquitectura de sistemas distribuidos, sincronización, replicación y tolerancia a fallos en entornos de computación moderna.</textarea>
+                        <textarea name="resumen" class="form-control" rows="3" placeholder="Texto descriptivo y temático del material..."></textarea>
                     </div>
                 </div>
 

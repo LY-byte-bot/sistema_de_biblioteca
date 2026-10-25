@@ -59,6 +59,9 @@ public class Libro {
     @Column(name = "stock_disponible")
     private Integer stockDisponible;
 
+    @Column(name = "portada_url", length = 500)
+    private String portadaUrl;
+
     @ManyToMany
     @JoinTable(
         name = "tbl_libro_autor",

@@ -28,10 +28,44 @@ public class ViewController {
     private final CategoriaService categoriaService;
     private final AutorService autorService;
 
-    // 7.1. Login
+    // 7.1. Login y Verificación de Roles
     @GetMapping({"/", "/login"})
     public String login() {
         return "login";
+    }
+
+    @PostMapping("/login")
+    public String procesarLogin(@RequestParam(name = "correo", required = false) String correo,
+                                @RequestParam(name = "password", required = false) String password,
+                                jakarta.servlet.http.HttpSession session,
+                                Model model) {
+        if (correo == null || correo.trim().isEmpty()) {
+            model.addAttribute("error", "Por favor ingresa tu correo electrónico.");
+            return "login";
+        }
+        String correoLimpio = correo.trim().toLowerCase();
+        var usuarioOpt = usuarioService.obtenerPorCorreo(correoLimpio);
+        if (usuarioOpt.isEmpty()) {
+            model.addAttribute("error", "Usuario no registrado con ese correo electrónico.");
+            return "login";
+        }
+        Usuario u = usuarioOpt.get();
+        if (password != null && !password.trim().isEmpty() && !password.equals(u.getPasswordHash())) {
+            model.addAttribute("error", "Contraseña incorrecta. Por favor verifica tus credenciales.");
+            return "login";
+        }
+        session.setAttribute("usuarioActual", u);
+        String rol = u.getRol() != null ? u.getRol().toUpperCase() : "LECTOR";
+        if (rol.contains("ADMIN") || rol.contains("BIBLIOTECARIO")) {
+            return "redirect:/admin/catalogo";
+        }
+        return "redirect:/catalogo";
+    }
+
+    @GetMapping("/logout")
+    public String logout(jakarta.servlet.http.HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
     }
 
     // 7.2. Registro

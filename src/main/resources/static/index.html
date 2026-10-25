@@ -16,17 +16,14 @@
 <body class="bg-light">
 
     <div id="app">
-        <!-- 1. Barra de herramientas para demostración rápida en la sustentación -->
-        <demo-toolbar :current-view="currentView" @navegar="navegarA"></demo-toolbar>
-
-        <!-- 2. Barra de navegación según el rol (Lector o Administrador) -->
+        <!-- Barra de navegación según el rol (Lector o Administrador) -->
         <navbar-lector v-if="['catalogo', 'detalle', 'prestamos'].includes(currentView)" :current-view="currentView"
-            :user-name="currentUser.nombre" @navegar="navegarA" @logout="cerrarSesion"></navbar-lector>
+            :user-name="currentUser ? currentUser.nombre : ''" @navegar="navegarA" @logout="cerrarSesion"></navbar-lector>
 
         <navbar-admin v-if="['admin-prestamos', 'admin-catalogacion', 'admin-telemetria'].includes(currentView)"
             :current-view="currentView" @navegar="navegarA" @logout="cerrarSesion"></navbar-admin>
 
-        <!-- 3. TRUCO DE VUE.JS: Renderizado dinámico de la vista activa en 1 sola línea -->
+        <!-- Renderizado dinámico de la vista activa -->
         <main>
             <component :is="activeComponent" :libros="libros" :selected-libro="selectedLibro"
                 :prestamos-lector="prestamosLector" :devoluciones-lector="devolucionesLector"

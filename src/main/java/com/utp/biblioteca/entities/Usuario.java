@@ -53,10 +53,11 @@ public class Usuario {
     private String direccion;
 
     @NotBlank(message = "El DNI es obligatorio")
-    @Pattern(regexp = "\\d{8}", message = "El DNI debe tener 8 dígitos numéricos")
+    @Pattern(regexp = "^[0-9]{8}$", message = "El DNI debe tener 8 dígitos numéricos")
     @Column(name = "dni", unique = true, length = 20)
     private String dni;
 
+    @Pattern(regexp = "^$|^[0-9]{9}$", message = "El celular debe tener 9 dígitos numéricos")
     @Column(name = "telefono", length = 20)
     private String telefono;
 

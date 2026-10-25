@@ -11,26 +11,6 @@
 </head>
 <body class="bg-light">
 
-    <!-- Barra Superior de Navegación Rápida -->
-    <nav class="navbar navbar-dark bg-dark py-1 px-3 d-print-none text-white small">
-        <div class="container-fluid d-flex justify-content-between align-items-center">
-            <span class="text-warning fw-semibold">
-                <i class="bi bi-mortarboard-fill me-1"></i> UTP - Marcos de Desarrollo Web 
-            </span>
-            <div class="btn-group btn-group-sm">
-                <a th:href="@{/login}" class="btn btn-outline-light active py-0 px-2">7.1 Login</a>
-                <a th:href="@{/registro}" class="btn btn-outline-light py-0 px-2">7.2 Registro</a>
-                <a th:href="@{/catalogo}" class="btn btn-outline-light py-0 px-2">7.3 Catálogo</a>
-                <a th:href="@{/libro/1}" class="btn btn-outline-light py-0 px-2">7.4 Info Libro</a>
-                <a th:href="@{/prestamos}" class="btn btn-outline-light py-0 px-2">7.5 Préstamos</a>
-                <a th:href="@{/admin/prestamos}" class="btn btn-outline-light py-0 px-2">7.6 Admin WhatsApp</a>
-                <a th:href="@{/admin/catalogo}" class="btn btn-outline-light py-0 px-2">7.7 Admin Catálogo</a>
-                <a th:href="@{/admin/catalogacion}" class="btn btn-outline-light py-0 px-2">7.7b Catalogación</a>
-                <a th:href="@{/admin/telemetria}" class="btn btn-outline-light py-0 px-2">7.8 Telemetría</a>
-            </div>
-        </div>
-    </nav>
-
     <!-- 7.1. INTERFAZ: LOGIN -->
     <div class="container py-5">
         <div class="row justify-content-center">
@@ -53,21 +33,26 @@
 
                     <div class="wire-header-line mb-4"></div>
 
+                    <!-- Alerta de Error de Inicio de Sesión -->
+                    <div th:if="${error}" class="alert alert-danger py-2 small mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> <span th:text="${error}"></span>
+                    </div>
+
                     <!-- Mensaje de Éxito si viene de registro -->
                     <div th:if="${mensajeExito}" class="alert alert-success py-2 small mb-3">
                         <i class="bi bi-check-circle-fill me-1"></i> <span th:text="${mensajeExito}"></span>
                     </div>
 
                     <!-- Formulario de Login -->
-                    <form th:action="@{/catalogo}" method="get">
+                    <form th:action="@{/login}" method="post">
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-dark">Correo Electrónico:</label>
-                            <input type="email" name="correo" class="form-control py-2" value="ivan.mamani@gmail.com" required>
+                            <input type="email" name="correo" class="form-control py-2" placeholder="ejemplo@correo.com" required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-dark">Contraseña:</label>
-                            <input type="password" name="password" class="form-control py-2" value="123456" required>
+                            <input type="password" name="password" class="form-control py-2" placeholder="Ingresa tu contraseña" required>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-4 small">

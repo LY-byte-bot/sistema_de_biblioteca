@@ -42,8 +42,12 @@ const NavbarLector = {
             <a href="#" @click.prevent="$emit('navegar', 'prestamos')" class="nav-link-wire" :class="{ active: currentView === 'prestamos' }">Mis Préstamos y Multas</a>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <span class="small fw-semibold text-dark"><i class="bi bi-person-fill me-1"></i> {{ userName }}</span>
-            <button @click="$emit('logout')" class="btn btn-sm btn-wire-outline">Cerrar Sesión</button>
+            <span v-if="userName" class="small fw-semibold text-dark"><i class="bi bi-person-fill me-1"></i> {{ userName }}</span>
+            <button v-if="userName" @click="$emit('logout')" class="btn btn-sm btn-wire-outline">Cerrar Sesión</button>
+            <div v-else class="d-flex gap-2">
+                <button @click="$emit('navegar', 'login')" class="btn btn-sm btn-wire-blue">Iniciar Sesión</button>
+                <button @click="$emit('navegar', 'registro')" class="btn btn-sm btn-wire-outline">Registrarse</button>
+            </div>
         </div>
     </header>`
 };
@@ -72,7 +76,7 @@ const NavbarAdmin = {
 // 3. Componente 7.1: Login
 const VistaLogin = {
     emits: ['navegar', 'login'],
-    data: () => ({ correo: 'ivan.mamani@gmail.com', password: '••••••••••••' }),
+    data: () => ({ correo: '', password: '' }),
     template: `
     <div class="container py-5 d-flex justify-content-center">
         <div class="wire-card p-4 p-md-5 col-md-5 col-lg-4 text-center">
@@ -249,7 +253,10 @@ const VistaCatalogo = {
                 <div class="wire-card p-3 h-100 d-flex flex-column justify-content-between">
                     <div>
                         <div class="row g-2 mb-2">
-                            <div class="col-5"><div class="book-cover-placeholder"><span class="cover-text">PORTADA DEL LIBRO</span></div></div>
+                            <div class="col-5">
+                                <img v-if="l.portadaUrl" :src="l.portadaUrl" class="img-fluid rounded border shadow-sm w-100" style="height: 140px; object-fit: cover;" @error="$event.target.style.display='none'">
+                                <div v-else class="book-cover-placeholder"><span class="cover-text">PORTADA DEL LIBRO</span></div>
+                            </div>
                             <div class="col-7">
                                 <h6 class="fw-bold text-dark mb-1">{{ l.titulo }}</h6>
                                 <p class="text-muted small mb-1"><strong>Autor:</strong> {{ (l.autores && l.autores[0]) ? l.autores[0].nombres : 'Varios Autores' }}</p>
@@ -293,7 +300,10 @@ const VistaDetalle = {
             </div>
 
             <div class="row g-4 mb-3">
-                <div class="col-md-3"><div class="book-cover-placeholder large"><span class="cover-text">PORTADA DEL LIBRO</span></div></div>
+                <div class="col-md-3">
+                    <img v-if="selectedLibro && selectedLibro.portadaUrl" :src="selectedLibro.portadaUrl" class="img-fluid rounded border shadow-sm w-100" style="max-height: 280px; object-fit: cover;" @error="$event.target.style.display='none'">
+                    <div v-else class="book-cover-placeholder large"><span class="cover-text">PORTADA DEL LIBRO</span></div>
+                </div>
                 <div class="col-md-9">
                     <div class="wire-card p-3 mb-3 bg-light row g-2 small">
                         <div class="col-6"><strong>ISBN:</strong> {{ selectedLibro.isbn }}</div>
@@ -472,15 +482,16 @@ const VistaAdminCatalogacion = {
         tab: 'formulario',
         modoEdicion: false,
         errores: [],
-        nuevo: { titulo: 'Sistemas Distribuidos', autores: 'Andrew S. Tanenbaum', isbn: '978-0132392273', categoria: 'Redes', editorial: 'Pearson - 2023', stockTotal: 5, stockDisponible: 5, ubicacion: 'B-08', resumen: 'Texto sobre arquitectura de sistemas distribuidos...' },
+        nuevo: { titulo: '', autores: '', isbn: '', categoria: '', editorial: '', portadaUrl: '', stockTotal: 1, stockDisponible: 1, ubicacion: '', resumen: '' },
         campos: [
             { key: 'titulo', label: 'Título:', col: 5 },
             { key: 'autores', label: 'Autor(es):', col: 4 },
             { key: 'isbn', label: 'ISBN:', col: 3 },
             { key: 'categoria', label: 'Categoría:', col: 4 },
             { key: 'editorial', label: 'Editorial y Año:', col: 4 },
+            { key: 'portadaUrl', label: 'URL Portada (Foto del Libro):', col: 4, ph: 'https://ejemplo.com/portada.jpg', required: false },
             { key: 'stockTotal', label: 'Ejemplares (Stock Total):', col: 2, type: 'number' },
-            { key: 'ubicacion', label: 'Ubicación:', col: 2 }
+            { key: 'ubicacion', label: 'Ubicación:', col: 2, required: false }
         ]
     }),
     methods: {
@@ -507,9 +518,10 @@ const VistaAdminCatalogacion = {
                 isbn: l.isbn || '',
                 categoria: categoriaTexto,
                 editorial: l.editorial || '',
+                portadaUrl: l.portadaUrl || '',
                 stockTotal: l.stockTotal || 1,
                 stockDisponible: l.stockDisponible !== undefined ? l.stockDisponible : (l.stockTotal || 1),
-                ubicacion: l.ubicacion || 'B-08',
+                ubicacion: l.ubicacion || '',
                 resumen: l.resumen || ''
             };
             this.tab = 'formulario';
@@ -517,7 +529,7 @@ const VistaAdminCatalogacion = {
         cancelarEdicion() {
             this.modoEdicion = false;
             this.errores = [];
-            this.nuevo = { titulo: '', autores: '', isbn: '', categoria: '', editorial: '', stockTotal: 1, stockDisponible: 1, ubicacion: 'B-08', resumen: '' };
+            this.nuevo = { titulo: '', autores: '', isbn: '', categoria: '', editorial: '', portadaUrl: '', stockTotal: 1, stockDisponible: 1, ubicacion: '', resumen: '' };
         },
         enviarFormulario() {
             this.errores = [];
@@ -529,7 +541,7 @@ const VistaAdminCatalogacion = {
                 } else {
                     this.errores = [];
                     this.modoEdicion = false;
-                    this.nuevo = { titulo: '', autores: '', isbn: '', categoria: '', editorial: '', stockTotal: 1, stockDisponible: 1, ubicacion: 'B-08', resumen: '' };
+                    this.nuevo = { titulo: '', autores: '', isbn: '', categoria: '', editorial: '', portadaUrl: '', stockTotal: 1, stockDisponible: 1, ubicacion: '', resumen: '' };
                     this.tab = 'inventario';
                 }
             });
@@ -569,7 +581,11 @@ const VistaAdminCatalogacion = {
                 <div class="row g-3 mb-3">
                     <div v-for="c in campos" :key="c.key" :class="'col-md-' + c.col">
                         <label class="form-label small fw-bold">{{ c.label }}</label>
-                        <input :type="c.type || 'text'" v-model="nuevo[c.key]" class="form-control form-control-sm" required>
+                        <input :type="c.type || 'text'" v-model="nuevo[c.key]" :placeholder="c.ph || ''" class="form-control form-control-sm" :required="c.required !== false">
+                        <div v-if="c.key === 'portadaUrl' && nuevo.portadaUrl" class="mt-2 p-1 border rounded bg-white d-flex align-items-center gap-2">
+                            <img :src="nuevo.portadaUrl" alt="Portada" style="height: 50px; width: 38px; object-fit: cover; border-radius: 2px;" @error="$event.target.style.display='none'">
+                            <span class="small text-success fw-semibold"><i class="bi bi-check-circle me-1"></i> Vista previa de la portada</span>
+                        </div>
                     </div>
                     <div class="col-12">
                         <label class="form-label small fw-bold">Sinopsis:</label>
