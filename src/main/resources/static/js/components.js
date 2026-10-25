@@ -128,8 +128,25 @@ const VistaRegistro = {
     methods: {
         enviarRegistro() {
             this.errores = [];
+            const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
+            if (!this.form.nombres || !regexLetras.test(this.form.nombres.trim())) {
+                this.errores.push('El nombre solo debe contener letras y espacios (sin números ni símbolos especiales).');
+            }
+            if (!this.form.apellidos || !regexLetras.test(this.form.apellidos.trim())) {
+                this.errores.push('Los apellidos solo deben contener letras y espacios (sin números ni símbolos especiales).');
+            }
+            const dniLimpio = (this.form.dni || '').trim().replace(/\s+/g, '');
+            if (!/^[0-9]{8}$/.test(dniLimpio)) {
+                this.errores.push('El DNI debe tener exactamente 8 dígitos numéricos.');
+            }
+            const telLimpio = (this.form.telefono || '').trim().replace(/[^0-9]/g, '');
+            if (!/^[0-9]{9}$/.test(telLimpio)) {
+                this.errores.push('El celular debe tener exactamente 9 dígitos numéricos.');
+            }
             if (this.form.password && this.form.confirmPassword && this.form.password !== this.form.confirmPassword) {
-                this.errores = ['Las contraseñas no coinciden'];
+                this.errores.push('Las contraseñas no coinciden.');
+            }
+            if (this.errores.length > 0) {
                 return;
             }
             this.$emit('registro', { ...this.form }, (errs) => {

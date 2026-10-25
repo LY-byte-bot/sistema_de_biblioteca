@@ -27,6 +27,7 @@ public class Usuario {
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$", message = "El nombre y apellidos solo deben contener letras y espacios (sin números ni símbolos especiales)")
     @Column(name = "nombre", nullable = false, length = 150)
     private String nombre;
 

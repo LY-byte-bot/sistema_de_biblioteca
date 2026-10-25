@@ -85,33 +85,69 @@ public class ViewController {
     }
 
     @PostMapping("/registro")
-    public String procesarRegistro(@ModelAttribute Usuario usuario, 
+    public String procesarRegistro(@RequestParam(name = "nombre", required = false) String nombre,
                                    @RequestParam(name = "apellidos", required = false) String apellidos,
+                                   @RequestParam(name = "dni", required = false) String dni,
+                                   @RequestParam(name = "telefono", required = false) String telefono,
+                                   @RequestParam(name = "correo", required = false) String correo,
+                                   @RequestParam(name = "passwordHash", required = false) String passwordHash,
+                                   @RequestParam(name = "confirmPassword", required = false) String confirmPassword,
                                    Model model) {
         try {
-            if (usuario.getNombre() != null) {
-                String nom = usuario.getNombre().trim();
-                if (apellidos != null && !apellidos.trim().isEmpty()) {
-                    nom += " " + apellidos.trim();
-                }
-                usuario.setNombre(nom);
+            // 1. Validar Nombres y Apellidos (Solo letras y espacios, sin números ni @, etc.)
+            String nom = (nombre != null) ? nombre.trim() : "";
+            String ape = (apellidos != null) ? apellidos.trim() : "";
+            if (nom.isEmpty()) {
+                throw new IllegalArgumentException("El nombre es obligatorio.");
             }
-            if (usuario.getDni() != null) {
-                usuario.setDni(usuario.getDni().trim().replaceAll("\\s+", ""));
+            if (ape.isEmpty()) {
+                throw new IllegalArgumentException("Los apellidos son obligatorios.");
             }
-            if (usuario.getTelefono() != null) {
-                String tel = usuario.getTelefono().trim().replaceAll("[^0-9]", "");
-                if (tel.length() == 11 && tel.startsWith("51")) {
-                    tel = tel.substring(2);
-                }
-                usuario.setTelefono(tel);
+            String regexLetras = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$";
+            if (!nom.matches(regexLetras)) {
+                throw new IllegalArgumentException("El nombre solo debe contener letras (sin números ni caracteres especiales como @, #, números).");
             }
-            if (usuario.getCorreo() != null) {
-                usuario.setCorreo(usuario.getCorreo().trim().toLowerCase());
+            if (!ape.matches(regexLetras)) {
+                throw new IllegalArgumentException("Los apellidos solo deben contener letras (sin números ni caracteres especiales como @, #, números).");
             }
-            if (usuario.getPasswordHash() != null) {
-                usuario.setPasswordHash(usuario.getPasswordHash().trim());
+
+            // 2. Validar DNI (Exactamente 8 dígitos numéricos)
+            String dniLimpio = (dni != null) ? dni.trim().replaceAll("\\s+", "") : "";
+            if (!dniLimpio.matches("^[0-9]{8}$")) {
+                throw new IllegalArgumentException("El DNI debe tener exactamente 8 dígitos numéricos.");
             }
+
+            // 3. Validar Teléfono / Celular (Exactamente 9 dígitos numéricos)
+            String telLimpio = (telefono != null) ? telefono.trim().replaceAll("[^0-9]", "") : "";
+            if (telLimpio.length() == 11 && telLimpio.startsWith("51")) {
+                telLimpio = telLimpio.substring(2);
+            }
+            if (!telLimpio.matches("^[0-9]{9}$")) {
+                throw new IllegalArgumentException("El celular debe tener exactamente 9 dígitos numéricos.");
+            }
+
+            // 4. Validar Correo Electrónico
+            String correoLimpio = (correo != null) ? correo.trim().toLowerCase() : "";
+            if (!correoLimpio.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                throw new IllegalArgumentException("El formato del correo electrónico es inválido (ejemplo: usuario@correo.com).");
+            }
+
+            // 5. Validar Contraseña y Confirmación
+            String pass = (passwordHash != null) ? passwordHash.trim() : "";
+            String passConf = (confirmPassword != null) ? confirmPassword.trim() : "";
+            if (pass.length() < 6) {
+                throw new IllegalArgumentException("La contraseña debe tener un mínimo de 6 caracteres.");
+            }
+            if (!pass.equals(passConf)) {
+                throw new IllegalArgumentException("Las contraseñas ingresadas no coinciden.");
+            }
+
+            Usuario usuario = new Usuario();
+            usuario.setNombre(nom + " " + ape);
+            usuario.setDni(dniLimpio);
+            usuario.setTelefono(telLimpio);
+            usuario.setCorreo(correoLimpio);
+            usuario.setPasswordHash(pass);
             usuario.setRol("LECTOR");
             usuario.setEstado("ACTIVO");
 
