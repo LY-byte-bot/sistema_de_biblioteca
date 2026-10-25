@@ -157,12 +157,41 @@ public class ViewController {
         return "libro-detalle";
     }
 
-    // 7.5. Préstamos y Multas del Lector
+    // 7.5. Préstamos y Multas del Lector (Cada usuario con sus propios préstamos)
     @GetMapping("/prestamos")
-    public String misPrestamos(Model model) {
-        List<Prestamo> prestamos = prestamoService.listarPrestamosActivos();
+    public String misPrestamos(jakarta.servlet.http.HttpSession session, Model model) {
+        Usuario usuarioActual = (Usuario) session.getAttribute("usuarioActual");
+        List<Prestamo> prestamos;
+        if (usuarioActual != null && usuarioActual.getIdUsuario() != null) {
+            prestamos = prestamoService.listarPorUsuario(usuarioActual.getIdUsuario());
+        } else {
+            prestamos = new ArrayList<>();
+        }
         model.addAttribute("prestamos", prestamos);
         return "prestamos";
+    }
+
+    @PostMapping("/prestamos/solicitar/{idLibro}")
+    public String solicitarPrestamo(@PathVariable Integer idLibro, 
+                                    jakarta.servlet.http.HttpSession session, 
+                                    RedirectAttributes redirectAttributes) {
+        Usuario usuarioActual = (Usuario) session.getAttribute("usuarioActual");
+        if (usuarioActual == null) {
+            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para solicitar un préstamo.");
+            return "redirect:/login";
+        }
+        try {
+            com.utp.biblioteca.dto.PrestamoRequestDTO solicitud = new com.utp.biblioteca.dto.PrestamoRequestDTO();
+            solicitud.setIdLibro(idLibro);
+            solicitud.setIdUsuario(usuarioActual.getIdUsuario());
+            solicitud.setDiasPrestamo(7);
+            prestamoService.registrarPrestamo(solicitud);
+            redirectAttributes.addFlashAttribute("mensajeExito", "¡Préstamo solicitado con éxito! El ejemplar ha sido reservado para ti.");
+            return "redirect:/prestamos";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "No se pudo realizar el préstamo: " + e.getMessage());
+            return "redirect:/libro/" + idLibro;
+        }
     }
 
     // 7.6. Panel Admin: Préstamos & WhatsApp

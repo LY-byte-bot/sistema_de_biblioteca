@@ -84,7 +84,10 @@
             <div class="row g-4 mb-4">
                 <!-- Portada Grande -->
                 <div class="col-md-4 col-lg-3">
-                    <div class="book-cover-placeholder large">
+                    <div th:if="${libro.portadaUrl != null and !libro.portadaUrl.isEmpty()}">
+                        <img th:src="${libro.portadaUrl}" class="img-fluid rounded border shadow-sm w-100" style="max-height: 340px; object-fit: cover;" onerror="this.style.display='none'">
+                    </div>
+                    <div th:unless="${libro.portadaUrl != null and !libro.portadaUrl.isEmpty()}" class="book-cover-placeholder large">
                         <span class="cover-text">PORTADA DEL LIBRO</span>
                     </div>
                 </div>
@@ -136,11 +139,18 @@
                         </ul>
                     </div>
 
+                    <!-- Alertas de Error si ocurren -->
+                    <div th:if="${error}" class="alert alert-danger py-2 small mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> <span th:text="${error}"></span>
+                    </div>
+
                     <!-- Botones de Acción -->
                     <div class="d-flex flex-wrap gap-3 mb-4">
-                        <button th:if="${libro.stockDisponible != null and libro.stockDisponible > 0}" onclick="alert('✓ ¡Préstamo Solicitado con Éxito!\n\nEl ejemplar ha sido reservado para ti por 24 horas. Acércate con tu DNI al mostrador de Atención al Usuario para el retiro físico.'); window.location.href='/prestamos';" class="btn btn-wire-yellow py-2 px-4">
-                            📖 Solicitar Préstamo de Ejemplar Físico
-                        </button>
+                        <form th:if="${libro.stockDisponible != null and libro.stockDisponible > 0}" th:action="@{'/prestamos/solicitar/' + ${libro.idLibro}}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-wire-yellow py-2 px-4 fw-bold">
+                                📖 Solicitar Préstamo de Ejemplar Físico
+                            </button>
+                        </form>
                         <button th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" onclick="alert('📌 ¡Reserva Registrada en Cola!\n\nHas ingresado a la lista de espera para este título. Te notificaremos cuando haya ejemplares libres.');" class="btn btn-wire-yellow py-2 px-4">
                             📌 Reservar Ejemplar en Cola de Espera
                         </button>

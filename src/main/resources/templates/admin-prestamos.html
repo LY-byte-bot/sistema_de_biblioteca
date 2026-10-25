@@ -50,7 +50,7 @@
                 <div class="col-md-7">
                     <label class="form-label small text-muted mb-1">Buscar por DNI del Lector, Celular o Código de Préstamo:</label>
                     <div class="input-group">
-                        <input type="text" class="form-control form-control-sm" placeholder="Ej. 72330451 o PR-2026-089" value="72330451">
+                        <input type="text" class="form-control form-control-sm" placeholder="Ej. 72330451 o PR-2026-089" >
                         <button class="btn btn-sm btn-wire-blue" type="button">Buscar Registro</button>
                     </div>
                 </div>
@@ -69,7 +69,7 @@
         <div class="wire-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold mb-0 text-dark">Control de Préstamos y Estados de Circulación</h5>
-                <span class="badge-stock-red">8 Préstamos con Retraso Detectados</span>
+                <span class="badge bg-light text-dark border"><span th:text="${prestamos != null ? prestamos.size() : 0}">0</span> Préstamos Activos</span>
             </div>
 
             <div class="table-responsive">
@@ -86,7 +86,7 @@
                     </thead>
                     <tbody>
                         <tr th:if="${prestamos == null or prestamos.isEmpty()}">
-                            <td colspan="5" class="py-4 text-muted">
+                            <td colspan="6" class="py-4 text-muted">
                                 <i class="bi bi-info-circle me-1"></i> No hay préstamos activos registrados en el sistema.
                             </td>
                         </tr>
@@ -94,14 +94,25 @@
                             <td class="fw-bold" th:text="'PR-' + ${p.idPrestamo}">PR-01</td>
                             <td class="text-start">
                                 <div class="fw-bold" th:text="${p.usuario != null ? p.usuario.nombre : 'Usuario no asignado'}">Nombre Lector</div>
-                                <div class="text-muted small" th:text="${p.usuario != null ? ('DNI: ' + p.usuario.dni + ' | ' + (p.usuario.telefono ?: '')) : ''}">DNI / Tel</div>
+                                <div class="text-muted small" th:text="${p.usuario != null ? ('DNI: ' + p.usuario.dni + ' | Tel: ' + (p.usuario.telefono ?: 'Sin teléfono')) : ''}">DNI / Tel</div>
                             </td>
                             <td class="text-start">
                                 <div class="fw-bold" th:text="${p.libro != null ? p.libro.titulo : 'Libro no asignado'}">Título</div>
                             </td>
-                            <td th:text="${p.fechaVencimiento}">02/09/2026</td>
+                            <td class="fw-semibold" th:text="${p.fechaVencimiento}">02/09/2026</td>
                             <td>
                                 <span class="badge-stock-green fw-bold">&check; <span th:text="${p.estado}">ACTIVO</span></span>
+                            </td>
+                            <td>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-success fw-bold"
+                                        th:data-nombre="${p.usuario != null ? p.usuario.nombre : 'Lector'}"
+                                        th:data-tel="${p.usuario != null ? (p.usuario.telefono ?: '') : ''}"
+                                        th:data-libro="${p.libro != null ? p.libro.titulo : 'Libro'}"
+                                        th:data-fecha="${p.fechaVencimiento}"
+                                        onclick="prepararNotificacionWhatsApp(this)">
+                                    <i class="bi bi-whatsapp me-1"></i> Notificar
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -122,31 +133,81 @@
 
             <div class="row g-3">
                 <div class="col-md-5">
-                    <div class="p-3 bg-light rounded-3 border small">
-                        <div class="mb-1"><strong>Destinatario:</strong> Lector en Circulación</div>
-                        <div class="mb-1"><strong>Número WhatsApp:</strong> +51 958 123 456</div>
-                        <div class="mb-1"><strong>Libro Prestado:</strong> Patrones de Diseño de Software</div>
-                        <div class="mb-1"><strong>Vencimiento:</strong> 22/08/2026 (3 días de retraso)</div>
-                        <div class="fw-bold text-danger">Multa Acumulada: S/. 6.00</div>
+                    <div class="p-3 bg-light rounded-3 border small mb-3">
+                        <div class="mb-2"><strong>Destinatario:</strong> <span id="destinatarioWhatsapp" class="fw-bold text-dark">Lector Seleccionado</span></div>
+                        <div class="mb-2"><strong>Libro Prestado:</strong> <span id="libroWhatsapp" class="text-primary fw-semibold">Ejemplar en préstamo</span></div>
+                        <div class="mb-2"><strong>Fecha Límite:</strong> <span id="vencimientoWhatsapp" class="fw-semibold">Fecha de retorno</span></div>
+                    </div>
+
+                    <div>
+                        <label class="form-label small fw-bold text-dark mb-1">
+                            <i class="bi bi-pencil-square me-1"></i> Número de WhatsApp del Lector (Editable):
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-telephone-fill text-success"></i></span>
+                            <input type="text" id="numeroWhatsapp" class="form-control" placeholder="Ej. 999643146 o 51999643146">
+                        </div>
+                        <div class="form-text small">Puedes cambiar libremente este número antes de enviar.</div>
                     </div>
                 </div>
 
                 <div class="col-md-7">
                     <label class="form-label small fw-bold text-dark mb-1">Plantilla del Mensaje de WhatsApp (Editable):</label>
-                    <textarea id="textoWhatsapp" class="form-control font-monospace small mb-2" rows="6">🔔 BIBLIOTECA ACADÉMICA DEL SUR - RECORDATORIO DE DEVOLUCIÓN:
+                    <textarea id="textoWhatsapp" class="form-control font-monospace small mb-2" rows="6">🔔 BIBLIOTECA ACADÉMICA DEL SUR - RECORDATORIO DE PRÉSTAMO:
 
 Estimado(a) Lector(a),
-Le recordamos que el préstamo del libro "Patrones de Diseño de Software" venció el 22/08/2026 (3 días de retraso).
-Multa acumulada actual: S/. 6.00.
-Por favor acérquese a la brevedad a la sala de Atención al Usuario para efectuar la devolución física y regularizar su situación.
+Le recordamos que mantiene el préstamo activo de un ejemplar con fecha próxima de devolución.
+Por favor acérquese a la sala de Atención al Usuario para la entrega física o renovación correspondiente.
 
 ¡Muchas gracias!</textarea>
                     
-                    <button onclick="window.open('https://wa.me/51958123456?text=' + encodeURIComponent(document.getElementById('textoWhatsapp').value), '_blank'); alert('✓ Notificación enviada exitosamente.');" class="btn btn-wire-green py-2 px-3 w-100 fw-bold">
-                        <i class="bi bi-send-fill me-1"></i> Enviar Notificación por WhatsApp
+                    <button type="button" onclick="enviarMensajeWhatsapp();" class="btn btn-wire-green py-2 px-3 w-100 fw-bold">
+                        <i class="bi bi-whatsapp me-1"></i> Abrir Chat y Enviar por WhatsApp
                     </button>
                 </div>
             </div>
+
+            <script>
+            function prepararNotificacionWhatsApp(btn) {
+                var nombre = btn.getAttribute('data-nombre') || 'Lector';
+                var tel = btn.getAttribute('data-tel') || '';
+                var libro = btn.getAttribute('data-libro') || 'Material Bibliográfico';
+                var fecha = btn.getAttribute('data-fecha') || 'Próximamente';
+
+                var telLimpio = tel.replace(/[^0-9]/g, '');
+                if (telLimpio.length === 9 && !telLimpio.startsWith('51')) {
+                    telLimpio = '51' + telLimpio;
+                }
+                document.getElementById('numeroWhatsapp').value = telLimpio;
+                document.getElementById('destinatarioWhatsapp').innerText = nombre;
+                document.getElementById('libroWhatsapp').innerText = libro;
+                document.getElementById('vencimientoWhatsapp').innerText = fecha;
+
+                var mensaje = "🔔 BIBLIOTECA ACADÉMICA DEL SUR - RECORDATORIO DE PRÉSTAMO:\n\n" +
+                              "Estimado(a) " + nombre + ",\n" +
+                              "Le recordamos que mantiene el préstamo activo del libro \"" + libro + "\" con fecha límite de devolución el " + fecha + ".\n" +
+                              "Por favor acérquese a la sala de Atención al Usuario para la devolución física o renovación.\n\n" +
+                              "¡Muchas gracias!";
+                document.getElementById('textoWhatsapp').value = mensaje;
+
+                document.getElementById('seccion-whatsapp').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            function enviarMensajeWhatsapp() {
+                var inputNum = document.getElementById('numeroWhatsapp').value;
+                var num = inputNum.replace(/[^0-9]/g, '');
+                var texto = document.getElementById('textoWhatsapp').value;
+                if (!num || num.length < 8) {
+                    alert('Por favor ingresa un número de teléfono válido.');
+                    return;
+                }
+                if (num.length === 9 && !num.startsWith('51')) {
+                    num = '51' + num;
+                }
+                var url = 'https://api.whatsapp.com/send?phone=' + num + '&text=' + encodeURIComponent(texto);
+                window.open(url, '_blank');
+            }
+            </script>
         </div>
 
         <!-- Registro de Devolución Física del Ejemplar en Mostrador -->

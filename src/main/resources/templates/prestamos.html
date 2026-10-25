@@ -49,29 +49,34 @@
     <!-- 7.5. INTERFAZ: MIS PRÉSTAMOS Y MULTA DEL CLIENTE -->
     <main class="container py-4">
 
-        <!-- 3 Tarjetas de Resumen Superior -->
+        <!-- Alerta de Éxito al Solicitar Préstamo -->
+        <div th:if="${mensajeExito}" class="alert alert-success py-2 small mb-4">
+            <i class="bi bi-check-circle-fill me-1"></i> <span th:text="${mensajeExito}"></span>
+        </div>
+
+        <!-- 3 Tarjetas de Resumen Dinámico del Usuario -->
         <div class="row g-3 mb-4">
             <div class="col-md-4">
                 <div class="metric-card blue">
                     <div class="small fw-bold text-primary text-uppercase mb-1">Préstamos Activos</div>
-                    <div class="fs-2 fw-bold text-dark">2 Libros</div>
-                    <div class="text-muted small">En posesión física</div>
+                    <div class="fs-2 fw-bold text-dark"><span th:text="${prestamos != null ? prestamos.size() : 0}">0</span> Libros</div>
+                    <div class="text-muted small">En posesión física actual</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="metric-card red">
                     <div class="small fw-bold text-danger text-uppercase mb-1">Multa Acumulada por Retraso</div>
-                    <div class="fs-2 fw-bold text-danger">S/. 6.00</div>
-                    <div class="text-danger small fw-semibold">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i> 1 libro con 3 días de retraso
+                    <div class="fs-2 fw-bold text-success">S/. 0.00</div>
+                    <div class="text-success small fw-semibold">
+                        &check; Sin moras pendientes
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="metric-card green">
                     <div class="small fw-bold text-success text-uppercase mb-1">Devoluciones Cumplidas</div>
-                    <div class="fs-2 fw-bold text-success">12 Libros</div>
-                    <div class="text-muted small">Historial positivo</div>
+                    <div class="fs-2 fw-bold text-dark">0 Libros</div>
+                    <div class="text-muted small">Historial al día</div>
                 </div>
             </div>
         </div>
@@ -147,29 +152,8 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="fw-bold">PR-2026-045</td>
-                            <td class="text-start fw-semibold">Clean Code: Manual de Estilo Ágil</td>
-                            <td>04/08/2026</td>
-                            <td>
-                                <span class="badge-stock-green">&check; Óptimo [OK]</span>
-                            </td>
-                            <td class="fw-bold text-dark">S/. 0.00</td>
-                            <td>
-                                <span class="badge-stock-green">Conforme</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">PR-2026-012</td>
-                            <td class="text-start fw-semibold">Ingeniería de Software: Un Enfoque Práctico</td>
-                            <td>18/07/2026</td>
-                            <td>
-                                <span class="badge-stock-green">&check; Óptimo [OK]</span>
-                            </td>
-                            <td class="fw-bold text-dark">S/. 4.00 (2 días retraso)</td>
-                            <td>
-                                <span class="badge-stock-blue" style="background-color: #eff6ff; color: #1d4ed8; border: 1.5px solid #60a5fa; border-radius: 50rem; padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600;">
-                                    Cancelado en Caja Física
-                                </span>
+                            <td colspan="6" class="py-4 text-muted">
+                                <i class="bi bi-info-circle me-1"></i> No registras devoluciones anteriores todavía.
                             </td>
                         </tr>
                     </tbody>
