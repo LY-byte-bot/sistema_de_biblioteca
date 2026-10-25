@@ -62,12 +62,28 @@ public class Usuario {
     private String telefono;
 
     @PrePersist
+    @PreUpdate
     public void prePersist() {
         if (this.fechaCreacion == null) {
             this.fechaCreacion = LocalDateTime.now();
         }
-        if (this.estado == null) {
+        if (this.estado == null || this.estado.isBlank()) {
             this.estado = "ACTIVO";
+        }
+        if (this.correo != null) {
+            this.correo = this.correo.trim().toLowerCase();
+        }
+        if (this.nombre != null) {
+            this.nombre = this.nombre.trim();
+        }
+        if (this.dni != null) {
+            this.dni = this.dni.trim().replaceAll("\\s+", "");
+        }
+        if (this.telefono != null) {
+            this.telefono = this.telefono.trim().replaceAll("[^0-9]", "");
+        }
+        if (this.passwordHash != null) {
+            this.passwordHash = this.passwordHash.trim();
         }
     }
 }

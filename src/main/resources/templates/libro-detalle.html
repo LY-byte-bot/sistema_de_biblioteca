@@ -30,10 +30,18 @@
             </div>
 
             <div class="d-flex align-items-center gap-3">
-                <span class="small fw-semibold text-dark">
-                    <i class="bi bi-person-fill me-1"></i> Ivan Mamani (Lector)
+                <span class="small fw-semibold text-dark" th:if="${session.usuarioActual != null}">
+                    <i class="bi bi-person-fill me-1"></i> <span th:text="${session.usuarioActual.nombre}">Nombre</span>
                 </span>
-                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+                <span class="small text-muted" th:unless="${session.usuarioActual != null}">
+                    <i class="bi bi-person me-1"></i> Lector Invitado
+                </span>
+                <a th:if="${session.usuarioActual != null and (session.usuarioActual.rol == 'ADMINISTRADOR' or session.usuarioActual.rol == 'BIBLIOTECARIO')}" 
+                   th:href="@{/admin/catalogo}" class="btn btn-sm btn-outline-primary py-1 px-2">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Panel Admin
+                </a>
+                <a th:if="${session.usuarioActual != null}" th:href="@{/logout}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+                <a th:unless="${session.usuarioActual != null}" th:href="@{/login}" class="btn btn-sm btn-wire-blue">Iniciar Sesión</a>
             </div>
         </div>
     </header>

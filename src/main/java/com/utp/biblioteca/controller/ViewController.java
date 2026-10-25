@@ -34,6 +34,14 @@ public class ViewController {
         return "login";
     }
 
+    private boolean esAdminOAutorizado(jakarta.servlet.http.HttpSession session) {
+        if (session == null) return false;
+        Usuario u = (Usuario) session.getAttribute("usuarioActual");
+        if (u == null || u.getRol() == null) return false;
+        String rol = u.getRol().toUpperCase().trim();
+        return rol.contains("ADMIN") || rol.contains("BIBLIOTECARIO");
+    }
+
     @PostMapping("/login")
     public String procesarLogin(@RequestParam(name = "correo", required = false) String correo,
                                 @RequestParam(name = "password", required = false) String password,
@@ -43,19 +51,21 @@ public class ViewController {
             model.addAttribute("error", "Por favor ingresa tu correo electrónico.");
             return "login";
         }
-        String correoLimpio = correo.trim().toLowerCase();
+        String correoLimpio = correo.trim();
         var usuarioOpt = usuarioService.obtenerPorCorreo(correoLimpio);
         if (usuarioOpt.isEmpty()) {
             model.addAttribute("error", "Usuario no registrado con ese correo electrónico.");
             return "login";
         }
         Usuario u = usuarioOpt.get();
-        if (password != null && !password.trim().isEmpty() && !password.equals(u.getPasswordHash())) {
+        String passIngresada = password != null ? password.trim() : "";
+        String passGuardada = u.getPasswordHash() != null ? u.getPasswordHash().trim() : "";
+        if (!passIngresada.equals(passGuardada)) {
             model.addAttribute("error", "Contraseña incorrecta. Por favor verifica tus credenciales.");
             return "login";
         }
         session.setAttribute("usuarioActual", u);
-        String rol = u.getRol() != null ? u.getRol().toUpperCase() : "LECTOR";
+        String rol = u.getRol() != null ? u.getRol().toUpperCase().trim() : "LECTOR";
         if (rol.contains("ADMIN") || rol.contains("BIBLIOTECARIO")) {
             return "redirect:/admin/catalogo";
         }
@@ -75,10 +85,36 @@ public class ViewController {
     }
 
     @PostMapping("/registro")
-    public String procesarRegistro(@ModelAttribute Usuario usuario, Model model) {
+    public String procesarRegistro(@ModelAttribute Usuario usuario, 
+                                   @RequestParam(name = "apellidos", required = false) String apellidos,
+                                   Model model) {
         try {
+            if (usuario.getNombre() != null) {
+                String nom = usuario.getNombre().trim();
+                if (apellidos != null && !apellidos.trim().isEmpty()) {
+                    nom += " " + apellidos.trim();
+                }
+                usuario.setNombre(nom);
+            }
+            if (usuario.getDni() != null) {
+                usuario.setDni(usuario.getDni().trim().replaceAll("\\s+", ""));
+            }
+            if (usuario.getTelefono() != null) {
+                String tel = usuario.getTelefono().trim().replaceAll("[^0-9]", "");
+                if (tel.length() == 11 && tel.startsWith("51")) {
+                    tel = tel.substring(2);
+                }
+                usuario.setTelefono(tel);
+            }
+            if (usuario.getCorreo() != null) {
+                usuario.setCorreo(usuario.getCorreo().trim().toLowerCase());
+            }
+            if (usuario.getPasswordHash() != null) {
+                usuario.setPasswordHash(usuario.getPasswordHash().trim());
+            }
             usuario.setRol("LECTOR");
             usuario.setEstado("ACTIVO");
+
             usuarioService.registrarUsuario(usuario);
             model.addAttribute("mensajeExito", "¡Registro exitoso! Ya puedes iniciar sesión con tu cuenta de lector.");
             return "login";
@@ -131,7 +167,10 @@ public class ViewController {
 
     // 7.6. Panel Admin: Préstamos & WhatsApp
     @GetMapping("/admin/prestamos")
-    public String adminPrestamos(Model model) {
+    public String adminPrestamos(jakarta.servlet.http.HttpSession session, Model model) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
         List<Prestamo> prestamos = prestamoService.listarPrestamosActivos();
         model.addAttribute("prestamos", prestamos);
         return "admin-prestamos";
@@ -139,7 +178,12 @@ public class ViewController {
 
     // 7.7. Panel Admin: Catalogación y Gestión de Libros (Registrar y Dar de Baja)
     @GetMapping("/admin/catalogacion")
-    public String adminCatalogacion(@RequestParam(name = "tab", required = false, defaultValue = "formulario") String tab, Model model) {
+    public String adminCatalogacion(@RequestParam(name = "tab", required = false, defaultValue = "formulario") String tab, 
+                                    jakarta.servlet.http.HttpSession session, 
+                                    Model model) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
         model.addAttribute("libros", libroService.listarTodos());
         model.addAttribute("categorias", categoriaService.listarCategorias());
         model.addAttribute("tabActiva", tab);
@@ -148,7 +192,10 @@ public class ViewController {
     }
 
     @PostMapping("/admin/libros/guardar")
-    public String guardarLibroAdmin(@ModelAttribute Libro libro) {
+    public String guardarLibroAdmin(@ModelAttribute Libro libro, jakarta.servlet.http.HttpSession session) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
         if (libro.getStockDisponible() == null) {
             libro.setStockDisponible(libro.getStockTotal());
         }
@@ -157,14 +204,20 @@ public class ViewController {
     }
 
     @PostMapping("/admin/libros/eliminar/{id}")
-    public String eliminarLibroAdmin(@PathVariable Integer id) {
+    public String eliminarLibroAdmin(@PathVariable Integer id, jakarta.servlet.http.HttpSession session) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
         libroService.eliminarLibro(id);
         return "redirect:/admin/catalogacion?tab=inventario";
     }
 
     // 7.8. Telemetría Actuator
     @GetMapping("/admin/telemetria")
-    public String adminTelemetria(Model model) {
+    public String adminTelemetria(jakarta.servlet.http.HttpSession session, Model model) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
         model.addAttribute("totalLibros", libroService.listarTodos().size());
         model.addAttribute("totalPrestamos", prestamoService.listarPrestamosActivos().size());
         return "admin-telemetria";
@@ -179,7 +232,11 @@ public class ViewController {
             @RequestParam(name = "actualizado", required = false) Boolean actualizado,
             @RequestParam(name = "eliminado", required = false) Boolean eliminado,
             @RequestParam(name = "error", required = false) String error,
+            jakarta.servlet.http.HttpSession session,
             Model model) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
 
         List<Libro> todosLosLibros = libroService.listarTodos();
         List<Libro> libros;
@@ -235,7 +292,11 @@ public class ViewController {
             @RequestParam(name = "categoriaId", required = false) Integer categoriaId,
             @RequestParam(name = "autorId", required = false) Integer autorId,
             @RequestParam(name = "autorNombre", required = false) String autorNombre,
+            jakarta.servlet.http.HttpSession session,
             RedirectAttributes redirectAttributes) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
         try {
             if (categoriaId != null && categoriaId > 0) {
                 categoriaService.obtenerPorId(categoriaId).ifPresent(cat -> {
@@ -279,7 +340,12 @@ public class ViewController {
     }
 
     @PostMapping("/admin/catalogo/eliminar/{id}")
-    public String eliminarLibroAdminCatalogo(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+    public String eliminarLibroAdminCatalogo(@PathVariable Integer id, 
+                                            jakarta.servlet.http.HttpSession session, 
+                                            RedirectAttributes redirectAttributes) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
         try {
             boolean eliminado = libroService.eliminarLibro(id);
             if (eliminado) {

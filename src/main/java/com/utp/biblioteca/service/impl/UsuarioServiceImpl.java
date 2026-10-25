@@ -38,7 +38,10 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional(readOnly = true)
     public Optional<Usuario> obtenerPorCorreo(String correo) {
-        return usuarioRepository.findByCorreo(correo);
+        if (correo == null || correo.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return usuarioRepository.findByCorreoIgnoreCase(correo.trim());
     }
 
     @Override

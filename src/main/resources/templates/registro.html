@@ -43,18 +43,18 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark">Apellidos:</label>
-                                <input type="text" class="form-control" placeholder="Ingresa tus apellidos" required>
+                                <input type="text" name="apellidos" class="form-control" placeholder="Ingresa tus apellidos" required>
                             </div>
                         </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark">DNI (Documento de Identidad):</label>
-                                <input type="text" name="dni" maxlength="8" class="form-control" placeholder="8 dígitos" required>
+                                <input type="text" name="dni" maxlength="8" pattern="[0-9]{8}" class="form-control" placeholder="Ej. 72330451 (8 dígitos)" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-dark">Número Telefónico:</label>
-                                <input type="text" name="telefono" class="form-control" placeholder="Ej. +51 987 654 321" required>
+                                <input type="text" name="telefono" maxlength="9" pattern="[0-9]{9}" class="form-control" placeholder="Ej. 987654321 (9 dígitos)" required>
                             </div>
                         </div>
 

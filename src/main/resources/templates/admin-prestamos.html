@@ -35,7 +35,7 @@
                 <span class="small fw-semibold text-dark">
                     <i class="bi bi-shield-lock-fill me-1 text-primary"></i> Bibliotecario
                 </span>
-                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+                <a th:href="@{/logout}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
             </div>
         </div>
     </header>
@@ -85,54 +85,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="fw-bold">PR-2026-089</td>
-                            <td class="text-start">
-                                <div class="fw-bold">Ivan Mamani Villanueva</div>
-                                <div class="text-muted small">DNI: 72330451 | +51 958 123 456</div>
-                            </td>
-                            <td class="text-start">
-                                <div class="fw-bold">Patrones de Diseño de Software</div>
-                                <div class="text-muted small">Ejemplar #02 (Estante B-4)</div>
-                            </td>
-                            <td>22/08/2026</td>
-                            <td>
-                                <span class="badge-stock-yellow text-danger fw-bold d-inline-block mb-1">
-                                    <i class="bi bi-exclamation-circle-fill me-1"></i> VENCIDO (+3 Días Retraso)
-                                </span>
-                                <div class="text-danger fw-bold small">Multa: S/. 6.00</div>
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button onclick="document.getElementById('seccion-whatsapp').scrollIntoView({behavior: 'smooth'});" class="btn btn-outline-success fw-bold">
-                                        <i class="bi bi-whatsapp me-1"></i> Enviar WhatsApp
-                                    </button>
-                                    <button onclick="document.getElementById('seccion-devolucion').scrollIntoView({behavior: 'smooth'});" class="btn btn-outline-secondary">
-                                        <i class="bi bi-box-arrow-in-down me-1"></i> Recibir Libro
-                                    </button>
-                                </div>
+                        <tr th:if="${prestamos == null or prestamos.isEmpty()}">
+                            <td colspan="5" class="py-4 text-muted">
+                                <i class="bi bi-info-circle me-1"></i> No hay préstamos activos registrados en el sistema.
                             </td>
                         </tr>
-                        <tr>
-                            <td class="fw-bold">PR-2026-104</td>
+                        <tr th:each="p : ${prestamos}">
+                            <td class="fw-bold" th:text="'PR-' + ${p.idPrestamo}">PR-01</td>
                             <td class="text-start">
-                                <div class="fw-bold">Ivan Mamani Villanueva</div>
-                                <div class="text-muted small">DNI: 72330451 | +51 958 123 456</div>
+                                <div class="fw-bold" th:text="${p.usuario != null ? p.usuario.nombre : 'Usuario no asignado'}">Nombre Lector</div>
+                                <div class="text-muted small" th:text="${p.usuario != null ? ('DNI: ' + p.usuario.dni + ' | ' + (p.usuario.telefono ?: '')) : ''}">DNI / Tel</div>
                             </td>
                             <td class="text-start">
-                                <div class="fw-bold">Arquitectura Web con Spring Boot 3</div>
-                                <div class="text-muted small">Ejemplar #01 (Estante A-12)</div>
+                                <div class="fw-bold" th:text="${p.libro != null ? p.libro.titulo : 'Libro no asignado'}">Título</div>
                             </td>
-                            <td>02/09/2026</td>
+                            <td th:text="${p.fechaVencimiento}">02/09/2026</td>
                             <td>
-                                <span class="badge-stock-green fw-bold">&check; VIGENTE (Quedan 5 días)</span>
-                                <div class="text-success small">Multa: S/. 0.00</div>
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-secondary">Detalle</button>
-                                    <button class="btn btn-outline-secondary">Recibir Libro</button>
-                                </div>
+                                <span class="badge-stock-green fw-bold">&check; <span th:text="${p.estado}">ACTIVO</span></span>
                             </td>
                         </tr>
                     </tbody>
@@ -154,7 +123,7 @@
             <div class="row g-3">
                 <div class="col-md-5">
                     <div class="p-3 bg-light rounded-3 border small">
-                        <div class="mb-1"><strong>Destinatario:</strong> Ivan Mamani Villanueva</div>
+                        <div class="mb-1"><strong>Destinatario:</strong> Lector en Circulación</div>
                         <div class="mb-1"><strong>Número WhatsApp:</strong> +51 958 123 456</div>
                         <div class="mb-1"><strong>Libro Prestado:</strong> Patrones de Diseño de Software</div>
                         <div class="mb-1"><strong>Vencimiento:</strong> 22/08/2026 (3 días de retraso)</div>
@@ -166,7 +135,7 @@
                     <label class="form-label small fw-bold text-dark mb-1">Plantilla del Mensaje de WhatsApp (Editable):</label>
                     <textarea id="textoWhatsapp" class="form-control font-monospace small mb-2" rows="6">🔔 BIBLIOTECA ACADÉMICA DEL SUR - RECORDATORIO DE DEVOLUCIÓN:
 
-Estimado(a) Ivan Mamani Villanueva,
+Estimado(a) Lector(a),
 Le recordamos que el préstamo del libro "Patrones de Diseño de Software" venció el 22/08/2026 (3 días de retraso).
 Multa acumulada actual: S/. 6.00.
 Por favor acérquese a la brevedad a la sala de Atención al Usuario para efectuar la devolución física y regularizar su situación.

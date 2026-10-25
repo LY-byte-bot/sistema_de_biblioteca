@@ -30,10 +30,18 @@
             </div>
 
             <div class="d-flex align-items-center gap-3">
-                <span class="small fw-semibold text-dark">
-                    <i class="bi bi-person-fill me-1"></i> Ivan Mamani (Lector)
+                <span class="small fw-semibold text-dark" th:if="${session.usuarioActual != null}">
+                    <i class="bi bi-person-fill me-1"></i> <span th:text="${session.usuarioActual.nombre}">Nombre</span>
                 </span>
-                <a th:href="@{/login}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+                <span class="small text-muted" th:unless="${session.usuarioActual != null}">
+                    <i class="bi bi-person me-1"></i> Lector Invitado
+                </span>
+                <a th:if="${session.usuarioActual != null and (session.usuarioActual.rol == 'ADMINISTRADOR' or session.usuarioActual.rol == 'BIBLIOTECARIO')}" 
+                   th:href="@{/admin/catalogo}" class="btn btn-sm btn-outline-primary py-1 px-2">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Panel Admin
+                </a>
+                <a th:if="${session.usuarioActual != null}" th:href="@{/logout}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+                <a th:unless="${session.usuarioActual != null}" th:href="@{/login}" class="btn btn-sm btn-wire-blue">Iniciar Sesión</a>
             </div>
         </div>
     </header>
@@ -89,49 +97,31 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="fw-bold">PR-2026-089</td>
-                            <td class="text-start">
-                                <div class="fw-bold">Patrones de Diseño de Software</div>
-                                <div class="text-muted small">Erich Gamma (Gang of Four)</div>
-                            </td>
-                            <td>15/08/2026</td>
-                            <td class="fw-semibold">22/08/2026</td>
-                            <td>
-                                <span class="badge-stock-yellow">
-                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Vencido (+3 días)
-                                </span>
-                            </td>
-                            <td>
-                                <div class="text-danger fw-bold">S/. 6.00</div>
-                                <div class="text-muted small" style="font-size: 0.75rem;">(S/. 2.00 / día retraso)</div>
-                            </td>
-                            <td>
-                                <button onclick="alert('Para devolver este libro y liquidar tu mora de S/. 6.00, acércate al mostrador de la biblioteca.');" class="btn btn-sm btn-outline-danger fw-bold">
-                                    Devolver en Biblioteca
-                                </button>
+                        <tr th:if="${prestamos == null or prestamos.isEmpty()}">
+                            <td colspan="7" class="py-4 text-muted">
+                                <i class="bi bi-info-circle me-1"></i> No tienes préstamos activos en este momento.
                             </td>
                         </tr>
-                        <tr>
-                            <td class="fw-bold">PR-2026-104</td>
+                        <tr th:each="p : ${prestamos}">
+                            <td class="fw-bold" th:text="'PR-' + ${p.idPrestamo}">PR-01</td>
                             <td class="text-start">
-                                <div class="fw-bold">Arquitectura Web con Spring Boot 3</div>
-                                <div class="text-muted small">Martin Fowler</div>
+                                <div class="fw-bold" th:text="${p.libro != null ? p.libro.titulo : 'Libro no especificado'}">Título</div>
                             </td>
-                            <td>26/08/2026</td>
-                            <td class="fw-semibold">02/09/2026</td>
+                            <td th:text="${p.fechaPrestamo}">2026-08-15</td>
+                            <td class="fw-semibold" th:text="${p.fechaVencimiento}">2026-08-22</td>
                             <td>
-                                <span class="badge-stock-green">
-                                    &check; Al día (5 días restantes)
+                                <span class="badge-stock-green" th:if="${p.estado == 'ACTIVO'}">
+                                    &check; Activo / Vigente
+                                </span>
+                                <span class="badge-stock-yellow" th:unless="${p.estado == 'ACTIVO'}" th:text="${p.estado}">
+                                    Estado
                                 </span>
                             </td>
                             <td>
-                                <div class="text-success fw-bold">S/. 0.00 (Sin mora)</div>
+                                <div class="text-success fw-bold">S/. 0.00</div>
                             </td>
                             <td>
-                                <button onclick="alert('✓ Solicitud de renovación enviada. Tu nuevo plazo vence el 09/09/2026.');" class="btn btn-sm btn-wire-blue">
-                                    Solicitar Renovación
-                                </button>
+                                <span class="badge bg-light text-dark border">En Circulación</span>
                             </td>
                         </tr>
                     </tbody>
