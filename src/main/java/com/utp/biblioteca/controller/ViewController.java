@@ -179,6 +179,8 @@ public class ViewController {
     // 7.7. Panel Admin: Catalogación y Gestión de Libros (Registrar y Dar de Baja)
     @GetMapping("/admin/catalogacion")
     public String adminCatalogacion(@RequestParam(name = "tab", required = false, defaultValue = "formulario") String tab, 
+                                    @RequestParam(name = "exito", required = false) Boolean exito,
+                                    @RequestParam(name = "error", required = false) String error,
                                     jakarta.servlet.http.HttpSession session, 
                                     Model model) {
         if (!esAdminOAutorizado(session)) {
@@ -188,27 +190,94 @@ public class ViewController {
         model.addAttribute("categorias", categoriaService.listarCategorias());
         model.addAttribute("tabActiva", tab);
         model.addAttribute("nuevoLibro", new Libro());
+        model.addAttribute("exito", exito != null && exito);
+        model.addAttribute("error", error);
         return "admin-catalogacion";
     }
 
     @PostMapping("/admin/libros/guardar")
-    public String guardarLibroAdmin(@ModelAttribute Libro libro, jakarta.servlet.http.HttpSession session) {
+    public String guardarLibroAdmin(
+            @ModelAttribute Libro libro,
+            @RequestParam(name = "categoriaId", required = false) Integer categoriaId,
+            @RequestParam(name = "autorNombre", required = false) String autorNombre,
+            jakarta.servlet.http.HttpSession session,
+            RedirectAttributes redirectAttributes) {
         if (!esAdminOAutorizado(session)) {
             return "redirect:/login";
         }
-        if (libro.getStockDisponible() == null) {
-            libro.setStockDisponible(libro.getStockTotal());
+        try {
+            if (libro.getTitulo() != null) {
+                libro.setTitulo(libro.getTitulo().trim());
+            }
+            if (libro.getIsbn() != null) {
+                libro.setIsbn(libro.getIsbn().trim());
+            }
+            if (libro.getAnioPublicacion() == null) {
+                libro.setAnioPublicacion(2024);
+            }
+            if (libro.getStockTotal() == null || libro.getStockTotal() < 0) {
+                libro.setStockTotal(1);
+            }
+            if (libro.getStockDisponible() == null) {
+                libro.setStockDisponible(libro.getStockTotal());
+            }
+            if (libro.getIdioma() == null || libro.getIdioma().isBlank()) {
+                libro.setIdioma("Español");
+            }
+            if (libro.getPortadaUrl() != null) {
+                libro.setPortadaUrl(libro.getPortadaUrl().trim());
+            }
+
+            if (categoriaId != null && categoriaId > 0) {
+                categoriaService.obtenerPorId(categoriaId).ifPresent(cat -> {
+                    libro.setCategorias(new ArrayList<>(List.of(cat)));
+                });
+            }
+
+            if (autorNombre != null && !autorNombre.trim().isEmpty()) {
+                String nombreCompleto = autorNombre.trim();
+                Autor autorObj = new Autor();
+                int lastSpace = nombreCompleto.lastIndexOf(" ");
+                if (lastSpace > 0) {
+                    autorObj.setNombres(nombreCompleto.substring(0, lastSpace));
+                    autorObj.setApellidos(nombreCompleto.substring(lastSpace + 1));
+                } else {
+                    autorObj.setNombres(nombreCompleto);
+                    autorObj.setApellidos("");
+                }
+                Autor autorGuardado = autorService.registrarAutor(autorObj);
+                libro.setAutores(new ArrayList<>(List.of(autorGuardado)));
+            }
+
+            libroService.registrarLibro(libro);
+            redirectAttributes.addAttribute("exito", true);
+            return "redirect:/admin/catalogacion?tab=inventario";
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            redirectAttributes.addAttribute("error", "Error: Ya existe un libro registrado con este ISBN.");
+            return "redirect:/admin/catalogacion?tab=formulario";
+        } catch (Exception e) {
+            redirectAttributes.addAttribute("error", "No se pudo registrar el libro: " + e.getMessage());
+            return "redirect:/admin/catalogacion?tab=formulario";
         }
-        libroService.registrarLibro(libro);
-        return "redirect:/admin/catalogacion?tab=inventario";
     }
 
     @PostMapping("/admin/libros/eliminar/{id}")
-    public String eliminarLibroAdmin(@PathVariable Integer id, jakarta.servlet.http.HttpSession session) {
+    public String eliminarLibroAdmin(@PathVariable Integer id, 
+                                     jakarta.servlet.http.HttpSession session,
+                                     RedirectAttributes redirectAttributes) {
         if (!esAdminOAutorizado(session)) {
             return "redirect:/login";
         }
-        libroService.eliminarLibro(id);
+        try {
+            boolean eliminado = libroService.eliminarLibro(id);
+            if (eliminado) {
+                redirectAttributes.addAttribute("exito", true);
+            } else {
+                redirectAttributes.addAttribute("error", "No se encontró el libro solicitado.");
+            }
+        } catch (Exception e) {
+            redirectAttributes.addAttribute("error", "No se puede dar de baja el libro porque tiene préstamos asociados.");
+        }
         return "redirect:/admin/catalogacion?tab=inventario";
     }
 

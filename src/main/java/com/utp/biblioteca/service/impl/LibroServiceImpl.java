@@ -31,6 +31,18 @@ public class LibroServiceImpl implements LibroService {
     @Override
     @Transactional
     public Libro registrarLibro(Libro libro) {
+        if (libro.getAnioPublicacion() == null) {
+            libro.setAnioPublicacion(2024);
+        }
+        if (libro.getIdioma() == null || libro.getIdioma().isBlank()) {
+            libro.setIdioma("Español");
+        }
+        if (libro.getStockTotal() == null || libro.getStockTotal() < 0) {
+            libro.setStockTotal(1);
+        }
+        if (libro.getStockDisponible() == null) {
+            libro.setStockDisponible(libro.getStockTotal());
+        }
         if (libro.getContenidosDigitales() != null) {
             libro.getContenidosDigitales().forEach(cd -> cd.setLibro(libro));
         }

@@ -62,6 +62,14 @@
 
             <form th:action="@{/admin/libros/guardar}" method="post">
                 
+                <!-- Alertas de Éxito o Error -->
+                <div th:if="${exito}" class="alert alert-success py-2 small mb-3">
+                    <i class="bi bi-check-circle-fill me-1"></i> ¡Operación realizada con éxito en el catálogo!
+                </div>
+                <div th:if="${error}" class="alert alert-danger py-2 small mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> <span th:text="${error}"></span>
+                </div>
+
                 <!-- 1. Metadatos Bibliográficos Generales -->
                 <div class="mb-4">
                     <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">1. Metadatos Bibliográficos Generales</h6>
@@ -69,15 +77,36 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-dark">Título del Libro: *</label>
-                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Clean Code" required>
+                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Clean Code: Manual de Estilo Ágil" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold text-dark">ISBN: *</label>
                             <input type="text" name="isbn" class="form-control" placeholder="Ej. 978-0132350884" required>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-bold text-dark">Nº Ejemplares Físicos: *</label>
-                            <input type="number" name="stockTotal" min="1" class="form-control" placeholder="1" required>
+                            <label class="form-label small fw-bold text-dark">Año de Publicación: *</label>
+                            <input type="number" name="anioPublicacion" min="1500" max="2026" value="2024" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark">Autor(es):</label>
+                            <input type="text" name="autorNombre" class="form-control" placeholder="Ej. Robert C. Martin">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark">Categoría Temática:</label>
+                            <select name="categoriaId" class="form-select">
+                                <option value="">-- Seleccionar Categoría --</option>
+                                <option th:each="cat : ${categorias}" 
+                                        th:value="${cat.idCategoria}" 
+                                        th:text="${cat.nombre}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark">Editorial:</label>
+                            <input type="text" name="editorial" class="form-control" placeholder="Ej. Prentice Hall">
                         </div>
                     </div>
 
@@ -86,9 +115,13 @@
                             <label class="form-label small fw-bold text-dark">URL de Portada (Foto del Libro):</label>
                             <input type="url" name="portadaUrl" class="form-control" placeholder="https://ejemplo.com/portada.jpg">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold text-dark">Editorial:</label>
-                            <input type="text" name="editorial" class="form-control" placeholder="Ej. Prentice Hall">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-dark">Nº Ejemplares Físicos (Stock): *</label>
+                            <input type="number" name="stockTotal" min="1" value="1" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-dark">Idioma:</label>
+                            <input type="text" name="idioma" value="Español" class="form-control">
                         </div>
                     </div>
 
@@ -98,33 +131,10 @@
                     </div>
                 </div>
 
-                <!-- 2. Subida de Archivo Digital para Indexación -->
-                <div class="mb-4">
-                    <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">2. Subida de Archivo Digital para Indexación Full-Text</h6>
-                    
-                    <div class="p-3 border rounded-3 bg-light">
-                        <div class="row g-3 align-items-center">
-                            <div class="col-md-7">
-                                <label class="form-label small fw-bold text-dark">Archivo PDF del Libro (Para Búsqueda Interna de Contenido y Muestra):</label>
-                                <input type="file" accept=".pdf,.epub" class="form-control form-control-sm mb-1">
-                                <div class="text-muted small">
-                                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i> archivo_distribuido_2023.pdf (16.4 MB) - Listo para procesamiento
-                                </div>
-                            </div>
-                            <div class="col-md-5">
-                                <div class="notice-box-blue p-2 small">
-                                    <strong><i class="bi bi-info-circle-fill me-1"></i> Indexación Automática:</strong>
-                                    Al guardar, el backend extraerá los textos y términos clave para permitir búsquedas contextuales por los alumnos.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="d-flex justify-content-end gap-2">
                     <a th:href="@{/admin/catalogacion(tab='inventario')}" class="btn btn-wire-outline px-4">Cancelar</a>
                     <button type="submit" class="btn btn-wire-blue px-4 py-2 fw-bold">
-                        💾 Guardar Libro e Iniciar Indexación Full-Text
+                        💾 Guardar Libro en Catálogo
                     </button>
                 </div>
 
