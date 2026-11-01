@@ -10,6 +10,6 @@ public interface PrestamoService {
     Prestamo registrarPrestamo(PrestamoRequestDTO solicitud);
     List<Prestamo> listarPrestamosActivos();
     List<Prestamo> listarPorUsuario(Integer idUsuario);
+    List<Prestamo> listarActivosPorUsuario(Integer idUsuario);
     Optional<Prestamo> obtenerPorId(Integer id);
 }
-

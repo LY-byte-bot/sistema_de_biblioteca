@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -82,5 +83,16 @@ public class DevolucionServiceImpl implements DevolucionService {
     public Optional<Devolucion> obtenerPorId(Integer id) {
         return devolucionRepository.findById(id);
     }
-}
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Devolucion> listarPorUsuario(Integer idUsuario) {
+        return devolucionRepository.findByPrestamoUsuarioIdUsuarioOrderByFechaDevolucionDesc(idUsuario);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Devolucion> listarTodas() {
+        return devolucionRepository.findAllByOrderByFechaDevolucionDesc();
+    }
+}

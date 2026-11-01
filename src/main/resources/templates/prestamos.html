@@ -50,8 +50,9 @@
     <main class="container py-4">
 
         <!-- Alerta de Éxito al Solicitar Préstamo -->
-        <div th:if="${mensajeExito}" class="alert alert-success py-2 small mb-4">
+        <div th:if="${mensajeExito}" class="alert alert-success alert-dismissible fade show py-2 small mb-4" role="alert">
             <i class="bi bi-check-circle-fill me-1"></i> <span th:text="${mensajeExito}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
         <!-- 3 Tarjetas de Resumen Dinámico del Usuario -->
@@ -59,33 +60,39 @@
             <div class="col-md-4">
                 <div class="metric-card blue">
                     <div class="small fw-bold text-primary text-uppercase mb-1">Préstamos Activos</div>
-                    <div class="fs-2 fw-bold text-dark"><span th:text="${prestamos != null ? prestamos.size() : 0}">0</span> Libros</div>
+                    <div class="fs-2 fw-bold text-dark"><span th:text="${prestamosActivos != null ? prestamosActivos.size() : 0}">0</span> Libros</div>
                     <div class="text-muted small">En posesión física actual</div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="metric-card red">
-                    <div class="small fw-bold text-danger text-uppercase mb-1">Multa Acumulada por Retraso</div>
-                    <div class="fs-2 fw-bold text-success">S/. 0.00</div>
-                    <div class="text-success small fw-semibold">
-                        &check; Sin moras pendientes
+                <div class="metric-card" th:classappend="${totalMulta != null and totalMulta > 0 ? 'red' : 'green'}">
+                    <div class="small fw-bold text-uppercase mb-1" th:classappend="${totalMulta != null and totalMulta > 0 ? 'text-danger' : 'text-success'}">
+                        Multa Acumulada por Retraso
+                    </div>
+                    <div class="fs-2 fw-bold" th:classappend="${totalMulta != null and totalMulta > 0 ? 'text-danger' : 'text-success'}"
+                         th:text="'S/. ' + ${#numbers.formatDecimal(totalMulta != null ? totalMulta : 0, 1, 2)}">S/. 0.00</div>
+                    <div class="small fw-semibold" th:classappend="${totalMulta != null and totalMulta > 0 ? 'text-danger' : 'text-success'}">
+                        <span th:if="${totalMulta != null and totalMulta > 0}">&excl; Regularizar pago en mostrador</span>
+                        <span th:unless="${totalMulta != null and totalMulta > 0}">&check; Sin moras pendientes</span>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="metric-card green">
                     <div class="small fw-bold text-success text-uppercase mb-1">Devoluciones Cumplidas</div>
-                    <div class="fs-2 fw-bold text-dark">0 Libros</div>
-                    <div class="text-muted small">Historial al día</div>
+                    <div class="fs-2 fw-bold text-dark"><span th:text="${devoluciones != null ? devoluciones.size() : 0}">0</span> Libros</div>
+                    <div class="text-muted small">Historial completado</div>
                 </div>
             </div>
         </div>
 
-        <!-- Tabla 1: Panel de Préstamos Activos -->
+        <!-- Tabla 1: Panel de Préstamos Activos (ÚNICAMENTE VIGENTES) -->
         <div class="wire-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold mb-0 text-dark">📋 1. Panel de Préstamos Activos</h5>
-                <span class="text-muted small">Cálculo de penalidades automatizado</span>
+                <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-1">
+                    <span th:text="${prestamosActivos != null ? prestamosActivos.size() : 0}">0</span> Ejemplares por Devolver
+                </span>
             </div>
 
             <div class="table-responsive">
@@ -96,34 +103,36 @@
                             <th class="text-start">Título del Libro</th>
                             <th>Fecha Préstamo</th>
                             <th>Fecha Límite Entrega</th>
-                            <th>Estado del Préstamo</th>
+                            <th>Estado Actual</th>
                             <th>Multa / Mora</th>
                             <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:if="${prestamos == null or prestamos.isEmpty()}">
+                        <tr th:if="${prestamosActivos == null or prestamosActivos.isEmpty()}">
                             <td colspan="7" class="py-4 text-muted">
-                                <i class="bi bi-info-circle me-1"></i> No tienes préstamos activos en este momento.
+                                <i class="bi bi-info-circle me-1"></i> No tienes préstamos activos pendientes de devolución en este momento.
                             </td>
                         </tr>
-                        <tr th:each="p : ${prestamos}">
-                            <td class="fw-bold" th:text="'PR-' + ${p.idPrestamo}">PR-01</td>
+                        <tr th:each="p : ${prestamosActivos}">
+                            <td class="fw-bold text-primary" th:text="'PR-' + ${p.idPrestamo}">PR-01</td>
                             <td class="text-start">
                                 <div class="fw-bold" th:text="${p.libro != null ? p.libro.titulo : 'Libro no especificado'}">Título</div>
+                                <div class="small text-muted" th:text="${p.libro != null ? 'ISBN: ' + p.libro.isbn : ''}">ISBN</div>
                             </td>
                             <td th:text="${p.fechaPrestamo}">2026-08-15</td>
                             <td class="fw-semibold" th:text="${p.fechaVencimiento}">2026-08-22</td>
                             <td>
-                                <span class="badge-stock-green" th:if="${p.estado == 'ACTIVO'}">
-                                    &check; Activo / Vigente
-                                </span>
-                                <span class="badge-stock-yellow" th:unless="${p.estado == 'ACTIVO'}" th:text="${p.estado}">
-                                    Estado
-                                </span>
+                                <span class="badge-stock-green fw-bold">&check; ACTIVO</span>
                             </td>
                             <td>
-                                <div class="text-success fw-bold">S/. 0.00</div>
+                                <div th:if="${p.fechaVencimiento != null and p.fechaVencimiento.isBefore(T(java.time.LocalDate).now())}" class="text-danger fw-bold">
+                                    <span th:text="'S/. ' + ${#numbers.formatDecimal(T(java.time.temporal.ChronoUnit).DAYS.between(p.fechaVencimiento, T(java.time.LocalDate).now()) * 2.50, 1, 2)}"></span>
+                                    <div class="small text-danger fw-semibold">(Vencido)</div>
+                                </div>
+                                <div th:unless="${p.fechaVencimiento != null and p.fechaVencimiento.isBefore(T(java.time.LocalDate).now())}" class="text-success fw-bold">
+                                    S/. 0.00
+                                </div>
                             </td>
                             <td>
                                 <span class="badge bg-light text-dark border">En Circulación</span>
@@ -134,9 +143,14 @@
             </div>
         </div>
 
-        <!-- Tabla 2: Historial de Devoluciones Anteriores -->
+        <!-- Tabla 2: Historial de Devoluciones Anteriores (100% DINÁMICO) -->
         <div class="wire-card p-4 mb-4">
-            <h5 class="fw-bold mb-3 text-dark">📜 2. Historial de Devoluciones Anteriores</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-dark">📜 2. Historial de Devoluciones Anteriores</h5>
+                <span class="badge bg-success-subtle text-success border border-success px-3 py-1">
+                    <span th:text="${devoluciones != null ? devoluciones.size() : 0}">0</span> Libros Devueltos
+                </span>
+            </div>
 
             <div class="table-responsive">
                 <table class="table table-wire text-center align-middle mb-0">
@@ -147,13 +161,34 @@
                             <th>Fecha Devolución</th>
                             <th>Estado Físico Ejemplar</th>
                             <th>Multa Aplicada</th>
-                            <th>Estado de Pago</th>
+                            <th>Estado de Entrega</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
+                        <tr th:if="${devoluciones == null or devoluciones.isEmpty()}">
                             <td colspan="6" class="py-4 text-muted">
                                 <i class="bi bi-info-circle me-1"></i> No registras devoluciones anteriores todavía.
+                            </td>
+                        </tr>
+                        <tr th:each="d : ${devoluciones}">
+                            <td class="fw-bold text-primary" th:text="'DEV-' + ${d.idDevolucion} + ' (PR-' + ${d.prestamo.idPrestamo} + ')'">DEV-01</td>
+                            <td class="text-start">
+                                <div class="fw-bold" th:text="${d.prestamo != null and d.prestamo.libro != null ? d.prestamo.libro.titulo : 'Libro devuelto'}">Título</div>
+                                <div class="small text-muted" th:if="${d.observacion != null and !d.observacion.isEmpty()}" th:text="'Obs: ' + ${d.observacion}">Obs</div>
+                            </td>
+                            <td class="fw-semibold" th:text="${d.fechaDevolucion}">2026-10-31</td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${d.estadoEjemplar}">BUENO</span>
+                            </td>
+                            <td>
+                                <span th:if="${d.montoMulta != null and d.montoMulta > 0}" class="text-danger fw-bold" 
+                                      th:text="'S/. ' + ${d.montoMulta} + ' (' + ${d.diasRetraso} + ' d mora)'">S/. 2.50</span>
+                                <span th:unless="${d.montoMulta != null and d.montoMulta > 0}" class="text-success fw-bold">
+                                    S/. 0.00
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-stock-green fw-bold">&check; Reintegrado al Catálogo</span>
                             </td>
                         </tr>
                     </tbody>

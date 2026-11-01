@@ -43,6 +43,16 @@
     <!-- 7.6. INTERFAZ: PANEL ADMIN (PRÉSTAMOS & WHATSAPP) -->
     <main class="container py-4">
 
+        <!-- Mensajes de Éxito o Error -->
+        <div th:if="${mensajeExito}" class="alert alert-success alert-dismissible fade show py-2 small mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-1"></i> <span th:text="${mensajeExito}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show py-2 small mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <!-- Buscador y Monitor -->
         <div class="wire-card p-3 mb-4">
             <h6 class="fw-bold text-dark mb-2">Monitor de Circulación y Estados de Préstamos</h6>
@@ -50,16 +60,16 @@
                 <div class="col-md-7">
                     <label class="form-label small text-muted mb-1">Buscar por DNI del Lector, Celular o Código de Préstamo:</label>
                     <div class="input-group">
-                        <input type="text" class="form-control form-control-sm" placeholder="Ej. 72330451 o PR-2026-089" >
-                        <button class="btn btn-sm btn-wire-blue" type="button">Buscar Registro</button>
+                        <input type="text" id="filtroBusqueda" onkeyup="filtrarTablaPrestamos()" class="form-control form-control-sm" placeholder="Ej. 59784230 o PR-12">
+                        <button class="btn btn-sm btn-wire-blue" type="button" onclick="filtrarTablaPrestamos()">Buscar Registro</button>
                     </div>
                 </div>
                 <div class="col-md-5">
                     <label class="form-label small text-muted mb-1">Filtrar por Estado:</label>
-                    <select class="form-select form-select-sm">
-                        <option>Todos los préstamos</option>
-                        <option selected>Solo préstamos vencidos con mora</option>
-                        <option>Solo préstamos vigentes</option>
+                    <select id="filtroEstado" onchange="filtrarTablaPrestamos()" class="form-select form-select-sm">
+                        <option value="todos" selected>Todos los préstamos activos</option>
+                        <option value="vencidos">Solo préstamos vencidos con mora</option>
+                        <option value="vigentes">Solo préstamos vigentes (en plazo)</option>
                     </select>
                 </div>
             </div>
@@ -73,25 +83,25 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-wire text-center align-middle mb-0">
+                <table class="table table-wire text-center align-middle mb-0" id="tablaPrestamos">
                     <thead>
                         <tr>
                             <th>Código</th>
                             <th class="text-start">Lector / Contacto</th>
                             <th class="text-start">Libro &amp; Ejemplar</th>
                             <th>Fecha Límite</th>
-                            <th>Estado Actual en el que se Encuentra</th>
-                            <th>Acciones de Gestión / Notificación</th>
+                            <th>Estado Actual</th>
+                            <th>Acciones de Gestión / Devolución</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:if="${prestamos == null or prestamos.isEmpty()}">
+                        <tr th:if="${prestamos == null or prestamos.isEmpty()}" id="filaVacia">
                             <td colspan="6" class="py-4 text-muted">
-                                <i class="bi bi-info-circle me-1"></i> No hay préstamos activos registrados en el sistema.
+                                <i class="bi bi-info-circle me-1"></i> No hay préstamos activos registrados en el sistema. Todos los libros han sido devueltos.
                             </td>
                         </tr>
-                        <tr th:each="p : ${prestamos}">
-                            <td class="fw-bold" th:text="'PR-' + ${p.idPrestamo}">PR-01</td>
+                        <tr th:each="p : ${prestamos}" class="fila-prestamo" th:data-fecha="${p.fechaVencimiento}">
+                            <td class="fw-bold text-primary" th:text="'PR-' + ${p.idPrestamo}">PR-01</td>
                             <td class="text-start">
                                 <div class="fw-bold" th:text="${p.usuario != null ? p.usuario.nombre : 'Usuario no asignado'}">Nombre Lector</div>
                                 <div class="text-muted small" th:text="${p.usuario != null ? ('DNI: ' + p.usuario.dni + ' | Tel: ' + (p.usuario.telefono ?: 'Sin teléfono')) : ''}">DNI / Tel</div>
@@ -104,15 +114,29 @@
                                 <span class="badge-stock-green fw-bold">&check; <span th:text="${p.estado}">ACTIVO</span></span>
                             </td>
                             <td>
-                                <button type="button" 
-                                        class="btn btn-sm btn-outline-success fw-bold"
-                                        th:data-nombre="${p.usuario != null ? p.usuario.nombre : 'Lector'}"
-                                        th:data-tel="${p.usuario != null ? (p.usuario.telefono ?: '') : ''}"
-                                        th:data-libro="${p.libro != null ? p.libro.titulo : 'Libro'}"
-                                        th:data-fecha="${p.fechaVencimiento}"
-                                        onclick="prepararNotificacionWhatsApp(this)">
-                                    <i class="bi bi-whatsapp me-1"></i> Notificar
-                                </button>
+                                <div class="d-flex justify-content-center gap-1">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-success fw-bold"
+                                            th:data-nombre="${p.usuario != null ? p.usuario.nombre : 'Lector'}"
+                                            th:data-tel="${p.usuario != null ? (p.usuario.telefono ?: '') : ''}"
+                                            th:data-libro="${p.libro != null ? p.libro.titulo : 'Libro'}"
+                                            th:data-fecha="${p.fechaVencimiento}"
+                                            onclick="prepararNotificacionWhatsApp(this)"
+                                            title="Enviar recordatorio por WhatsApp">
+                                        <i class="bi bi-whatsapp me-1"></i> Notificar
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-primary fw-bold btn-devolver-fila"
+                                            th:data-id="${p.idPrestamo}"
+                                            th:data-nombre="${p.usuario != null ? p.usuario.nombre : 'Lector'}"
+                                            th:data-dni="${p.usuario != null ? (p.usuario.dni ?: '') : ''}"
+                                            th:data-libro="${p.libro != null ? p.libro.titulo : 'Libro'}"
+                                            th:data-fecha="${p.fechaVencimiento}"
+                                            onclick="seleccionarParaDevolucion(this)"
+                                            title="Seleccionar para devolver este libro">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i> Devolver
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -166,82 +190,202 @@ Por favor acérquese a la sala de Atención al Usuario para la entrega física o
                     </button>
                 </div>
             </div>
-
-            <script>
-            function prepararNotificacionWhatsApp(btn) {
-                var nombre = btn.getAttribute('data-nombre') || 'Lector';
-                var tel = btn.getAttribute('data-tel') || '';
-                var libro = btn.getAttribute('data-libro') || 'Material Bibliográfico';
-                var fecha = btn.getAttribute('data-fecha') || 'Próximamente';
-
-                var telLimpio = tel.replace(/[^0-9]/g, '');
-                if (telLimpio.length === 9 && !telLimpio.startsWith('51')) {
-                    telLimpio = '51' + telLimpio;
-                }
-                document.getElementById('numeroWhatsapp').value = telLimpio;
-                document.getElementById('destinatarioWhatsapp').innerText = nombre;
-                document.getElementById('libroWhatsapp').innerText = libro;
-                document.getElementById('vencimientoWhatsapp').innerText = fecha;
-
-                var mensaje = "🔔 BIBLIOTECA ACADÉMICA DEL SUR - RECORDATORIO DE PRÉSTAMO:\n\n" +
-                              "Estimado(a) " + nombre + ",\n" +
-                              "Le recordamos que mantiene el préstamo activo del libro \"" + libro + "\" con fecha límite de devolución el " + fecha + ".\n" +
-                              "Por favor acérquese a la sala de Atención al Usuario para la devolución física o renovación.\n\n" +
-                              "¡Muchas gracias!";
-                document.getElementById('textoWhatsapp').value = mensaje;
-
-                document.getElementById('seccion-whatsapp').scrollIntoView({ behavior: 'smooth' });
-            }
-
-            function enviarMensajeWhatsapp() {
-                var inputNum = document.getElementById('numeroWhatsapp').value;
-                var num = inputNum.replace(/[^0-9]/g, '');
-                var texto = document.getElementById('textoWhatsapp').value;
-                if (!num || num.length < 8) {
-                    alert('Por favor ingresa un número de teléfono válido.');
-                    return;
-                }
-                if (num.length === 9 && !num.startsWith('51')) {
-                    num = '51' + num;
-                }
-                var url = 'https://api.whatsapp.com/send?phone=' + num + '&text=' + encodeURIComponent(texto);
-                window.open(url, '_blank');
-            }
-            </script>
         </div>
 
-        <!-- Registro de Devolución Física del Ejemplar en Mostrador -->
+        <!-- Registro de Devolución Física del Ejemplar en Mostrador (FORMULARIO 100% FUNCIONAL) -->
         <div id="seccion-devolucion" class="wire-card p-4">
-            <h6 class="fw-bold text-dark mb-3">
-                <i class="bi bi-cash-coin text-primary me-1"></i> Registro de Devolución Física del Ejemplar en Mostrador
-            </h6>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-dark mb-0">
+                    <i class="bi bi-box-arrow-in-down text-primary me-1"></i> Registro de Devolución Física del Ejemplar en Mostrador
+                </h6>
+                <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1 small rounded-pill">
+                    Reintegro Automático al Catálogo
+                </span>
+            </div>
             
-            <div class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label class="form-label small fw-bold text-dark">Estado Físico del Libro Devuelto:</label>
-                    <select class="form-select">
-                        <option>Óptimo / Sin daños (Reingresa al catálogo)</option>
-                        <option>Regular / Desgaste leve</option>
-                        <option>Dañado (Requiere encuadernación)</option>
-                    </select>
-                </div>
+            <form th:action="@{/admin/prestamos/devolver}" method="post" id="formDevolucion">
+                <!-- Campo Oculto con el ID de Préstamo Seleccionado -->
+                <input type="hidden" name="idPrestamo" id="devolucionIdPrestamo" required>
 
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-dark">Cobro de Multa en Caja Física:</label>
-                    <div class="p-2 text-center rounded border border-danger bg-danger-subtle text-danger fw-bold fs-6">
-                        S/. 6.00 (Efectivo cobrado físicamente)
+                <!-- Panel Informativo del Préstamo Seleccionado -->
+                <div id="panelPrestamoSeleccionado" class="p-3 bg-light rounded-3 border small mb-3 transition-all">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-2">
+                            <span class="text-muted d-block small">Código Préstamo:</span>
+                            <strong id="devCodigoPrestamo" class="fs-6 text-primary">Ninguno</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted d-block small">Lector / Beneficiario:</span>
+                            <strong id="devLector" class="text-dark">Selecciona un préstamo en la tabla de arriba</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="text-muted d-block small">Libro a Reintegrar:</span>
+                            <strong id="devLibro" class="text-dark">-</strong>
+                        </div>
+                        <div class="col-md-2 text-md-end">
+                            <span class="text-muted d-block small">Fecha Límite:</span>
+                            <strong id="devFechaVencimiento" class="text-dark">-</strong>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-md-4">
-                    <button onclick="alert('✓ ¡Devolución Confirmada!\n\nSe ha reintegrado el ejemplar al catálogo y registrado el pago en caja física.');" class="btn btn-wire-green w-100 py-2 fw-bold">
-                        &check; Confirmar Devolución &amp; Liberar Lector
-                    </button>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-dark mb-1">Estado Físico del Libro Devuelto:</label>
+                        <select name="estadoEjemplar" class="form-select">
+                            <option value="BUENO" selected>Óptimo / Sin daños (Reingresa al catálogo)</option>
+                            <option value="REGULAR">Regular / Desgaste leve</option>
+                            <option value="DANADO">Dañado (Requiere encuadernación)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-dark mb-1">Cálculo de Multa / Mora:</label>
+                        <div id="boxMultaCalculada" class="p-2 text-center rounded border border-secondary bg-light text-muted fw-bold fs-6">
+                            Selecciona un préstamo
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-dark mb-1">Observación:</label>
+                        <input type="text" name="observacion" class="form-control" placeholder="Ninguna (Opcional)">
+                    </div>
+
+                    <div class="col-md-3">
+                        <button type="submit" id="btnConfirmarDevolucion" class="btn btn-wire-green w-100 py-2 fw-bold" disabled>
+                            &check; Confirmar Devolución &amp; Liberar Lector
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
 
     </main>
+
+    <!-- Scripts de Interacción -->
+    <script>
+    function prepararNotificacionWhatsApp(btn) {
+        var nombre = btn.getAttribute('data-nombre') || 'Lector';
+        var tel = btn.getAttribute('data-tel') || '';
+        var libro = btn.getAttribute('data-libro') || 'Material Bibliográfico';
+        var fecha = btn.getAttribute('data-fecha') || 'Próximamente';
+
+        var telLimpio = tel.replace(/[^0-9]/g, '');
+        if (telLimpio.length === 9 && !telLimpio.startsWith('51')) {
+            telLimpio = '51' + telLimpio;
+        }
+        document.getElementById('numeroWhatsapp').value = telLimpio;
+        document.getElementById('destinatarioWhatsapp').innerText = nombre;
+        document.getElementById('libroWhatsapp').innerText = libro;
+        document.getElementById('vencimientoWhatsapp').innerText = fecha;
+
+        var mensaje = "🔔 BIBLIOTECA ACADÉMICA DEL SUR - RECORDATORIO DE PRÉSTAMO:\n\n" +
+                      "Estimado(a) " + nombre + ",\n" +
+                      "Le recordamos que mantiene el préstamo activo del libro \"" + libro + "\" con fecha límite de devolución el " + fecha + ".\n" +
+                      "Por favor acérquese a la sala de Atención al Usuario para la devolución física o renovación.\n\n" +
+                      "¡Muchas gracias!";
+        document.getElementById('textoWhatsapp').value = mensaje;
+
+        document.getElementById('seccion-whatsapp').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function enviarMensajeWhatsapp() {
+        var inputNum = document.getElementById('numeroWhatsapp').value;
+        var num = inputNum.replace(/[^0-9]/g, '');
+        var texto = document.getElementById('textoWhatsapp').value;
+        if (!num || num.length < 8) {
+            alert('Por favor ingresa un número de teléfono válido.');
+            return;
+        }
+        if (num.length === 9 && !num.startsWith('51')) {
+            num = '51' + num;
+        }
+        var url = 'https://api.whatsapp.com/send?phone=' + num + '&text=' + encodeURIComponent(texto);
+        window.open(url, '_blank');
+    }
+
+    function seleccionarParaDevolucion(btn) {
+        var id = btn.getAttribute('data-id');
+        var nombre = btn.getAttribute('data-nombre') || 'Lector';
+        var dni = btn.getAttribute('data-dni') || '';
+        var libro = btn.getAttribute('data-libro') || 'Libro';
+        var fechaStr = btn.getAttribute('data-fecha') || '';
+
+        document.getElementById('devolucionIdPrestamo').value = id;
+        document.getElementById('devCodigoPrestamo').innerText = 'PR-' + id;
+        document.getElementById('devLector').innerText = nombre + (dni ? ' (DNI: ' + dni + ')' : '');
+        document.getElementById('devLibro').innerText = libro;
+        document.getElementById('devFechaVencimiento').innerText = fechaStr;
+
+        // Cálculo dinámico de mora
+        var boxMulta = document.getElementById('boxMultaCalculada');
+        if (fechaStr) {
+            var fechaVenc = new Date(fechaStr + 'T23:59:59');
+            var hoy = new Date();
+            var diffTime = hoy - fechaVenc;
+            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) - 1;
+
+            if (diffDays > 0) {
+                var multa = (diffDays * 2.50).toFixed(2);
+                boxMulta.className = "p-2 text-center rounded border border-danger bg-danger-subtle text-danger fw-bold fs-6";
+                boxMulta.innerText = "S/. " + multa + " (" + diffDays + " días de mora)";
+            } else {
+                boxMulta.className = "p-2 text-center rounded border border-success bg-success-subtle text-success fw-bold fs-6";
+                boxMulta.innerText = "S/. 0.00 (Sin mora / Al día)";
+            }
+        }
+
+        // Habilitar el botón de confirmar devolución
+        var btnConfirm = document.getElementById('btnConfirmarDevolucion');
+        btnConfirm.disabled = false;
+
+        // Efecto visual de selección y scroll suave hacia la sección
+        var panel = document.getElementById('panelPrestamoSeleccionado');
+        panel.classList.remove('bg-light');
+        panel.classList.add('bg-primary-subtle');
+        setTimeout(function() {
+            panel.classList.remove('bg-primary-subtle');
+            panel.classList.add('bg-light');
+        }, 1200);
+
+        document.getElementById('seccion-devolucion').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function filtrarTablaPrestamos() {
+        var input = (document.getElementById('filtroBusqueda').value || '').toLowerCase().trim();
+        var filtroEstado = document.getElementById('filtroEstado').value;
+        var filas = document.querySelectorAll('tbody tr.fila-prestamo');
+        var hoy = new Date().toISOString().split('T')[0];
+
+        filas.forEach(function(fila) {
+            var texto = fila.innerText.toLowerCase();
+            var fecha = fila.getAttribute('data-fecha') || '';
+            var esVencido = fecha && fecha < hoy;
+
+            var coincideTexto = !input || texto.indexOf(input) !== -1;
+            var coincideEstado = true;
+            if (filtroEstado === 'vencidos') {
+                coincideEstado = esVencido;
+            } else if (filtroEstado === 'vigentes') {
+                coincideEstado = !esVencido;
+            }
+
+            if (coincideTexto && coincideEstado) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+
+    // Auto-seleccionar el primer préstamo de la lista si existe
+    document.addEventListener('DOMContentLoaded', function() {
+        var primerBotonDevolver = document.querySelector('.btn-devolver-fila');
+        if (primerBotonDevolver) {
+            seleccionarParaDevolucion(primerBotonDevolver);
+        }
+    });
+    </script>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

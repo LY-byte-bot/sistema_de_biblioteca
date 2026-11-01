@@ -69,8 +69,13 @@ public class PrestamoServiceImpl implements PrestamoService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Prestamo> listarActivosPorUsuario(Integer idUsuario) {
+        return prestamoRepository.findByUsuarioIdUsuarioAndEstado(idUsuario, "ACTIVO");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<Prestamo> obtenerPorId(Integer id) {
         return prestamoRepository.findById(id);
     }
 }
-

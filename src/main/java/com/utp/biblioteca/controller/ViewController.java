@@ -6,6 +6,10 @@ import com.utp.biblioteca.entities.Prestamo;
 import com.utp.biblioteca.entities.Usuario;
 import com.utp.biblioteca.service.AutorService;
 import com.utp.biblioteca.service.CategoriaService;
+import com.utp.biblioteca.service.DevolucionService;
+import com.utp.biblioteca.dto.DevolucionRequestDTO;
+import com.utp.biblioteca.entities.Devolucion;
+import java.math.BigDecimal;
 import com.utp.biblioteca.service.LibroService;
 import com.utp.biblioteca.service.PrestamoService;
 import com.utp.biblioteca.service.UsuarioService;
@@ -25,6 +29,7 @@ public class ViewController {
     private final LibroService libroService;
     private final UsuarioService usuarioService;
     private final PrestamoService prestamoService;
+    private final DevolucionService devolucionService;
     private final CategoriaService categoriaService;
     private final AutorService autorService;
 
@@ -193,17 +198,40 @@ public class ViewController {
         return "libro-detalle";
     }
 
-    // 7.5. Préstamos y Multas del Lector (Cada usuario con sus propios préstamos)
+    // 7.5. Préstamos y Multas del Lector (Solo préstamos activos y devoluciones reales)
     @GetMapping("/prestamos")
     public String misPrestamos(jakarta.servlet.http.HttpSession session, Model model) {
         Usuario usuarioActual = (Usuario) session.getAttribute("usuarioActual");
-        List<Prestamo> prestamos;
+        List<Prestamo> prestamosActivos = new ArrayList<>();
+        List<Devolucion> devoluciones = new ArrayList<>();
+        BigDecimal totalMulta = BigDecimal.ZERO;
+
         if (usuarioActual != null && usuarioActual.getIdUsuario() != null) {
-            prestamos = prestamoService.listarPorUsuario(usuarioActual.getIdUsuario());
-        } else {
-            prestamos = new ArrayList<>();
+            // 1. Obtener ÚNICAMENTE préstamos vigentes/activos (no devueltos)
+            prestamosActivos = prestamoService.listarActivosPorUsuario(usuarioActual.getIdUsuario());
+            // 2. Obtener el historial de devoluciones reales del usuario
+            devoluciones = devolucionService.listarPorUsuario(usuarioActual.getIdUsuario());
+
+            // 3. Sumar multas de devoluciones históricas
+            for (Devolucion d : devoluciones) {
+                if (d.getMontoMulta() != null) {
+                    totalMulta = totalMulta.add(d.getMontoMulta());
+                }
+            }
+
+            // 4. Sumar mora acumulada de préstamos activos vencidos
+            java.time.LocalDate hoy = java.time.LocalDate.now();
+            for (Prestamo p : prestamosActivos) {
+                if (p.getFechaVencimiento() != null && p.getFechaVencimiento().isBefore(hoy)) {
+                    long dias = java.time.temporal.ChronoUnit.DAYS.between(p.getFechaVencimiento(), hoy);
+                    totalMulta = totalMulta.add(BigDecimal.valueOf(dias).multiply(new BigDecimal("2.50")));
+                }
+            }
         }
-        model.addAttribute("prestamos", prestamos);
+        model.addAttribute("prestamos", prestamosActivos);
+        model.addAttribute("prestamosActivos", prestamosActivos);
+        model.addAttribute("devoluciones", devoluciones);
+        model.addAttribute("totalMulta", totalMulta);
         return "prestamos";
     }
 
@@ -240,6 +268,42 @@ public class ViewController {
         model.addAttribute("prestamos", prestamos);
         return "admin-prestamos";
     }
+
+    
+    @GetMapping("/admin/prestamos/devolver")
+    public String redirigirDevolucionGet() {
+        return "redirect:/admin/prestamos";
+    }
+
+    @PostMapping("/admin/prestamos/devolver")
+    public String registrarDevolucionAdmin(
+            @RequestParam(name = "idPrestamo") Integer idPrestamo,
+            @RequestParam(name = "estadoEjemplar", required = false, defaultValue = "BUENO") String estadoEjemplar,
+            @RequestParam(name = "observacion", required = false) String observacion,
+            jakarta.servlet.http.HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        if (!esAdminOAutorizado(session)) {
+            return "redirect:/login";
+        }
+        try {
+            DevolucionRequestDTO solicitud = new DevolucionRequestDTO();
+            solicitud.setIdPrestamo(idPrestamo);
+            solicitud.setEstadoEjemplar(estadoEjemplar != null && !estadoEjemplar.isBlank() ? estadoEjemplar : "BUENO");
+            solicitud.setObservacion(observacion != null && !observacion.isBlank() ? observacion.trim() : "Devolucion fisica en mostrador");
+
+            Devolucion dev = devolucionService.procesarDevolucion(solicitud);
+
+            String mensaje = "Devolucion confirmada: El prestamo PR-" + idPrestamo + " ha sido marcado como DEVUELTO y el ejemplar fue reingresado al catalogo.";
+            if (dev.getMontoMulta() != null && dev.getMontoMulta().compareTo(BigDecimal.ZERO) > 0) {
+                mensaje += " Se registro una multa de S/. " + dev.getMontoMulta() + " por " + dev.getDiasRetraso() + " dias de mora.";
+            }
+            redirectAttributes.addFlashAttribute("mensajeExito", mensaje);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al procesar la devolucion: " + e.getMessage());
+        }
+        return "redirect:/admin/prestamos";
+    }
+
 
     // 7.7. Panel Admin: Catalogación y Gestión de Libros (Registrar y Dar de Baja)
     @GetMapping("/admin/catalogacion")

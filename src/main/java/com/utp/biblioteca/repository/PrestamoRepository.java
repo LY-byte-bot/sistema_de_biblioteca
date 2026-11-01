@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface PrestamoRepository extends JpaRepository<Prestamo, Integer> {
     List<Prestamo> findByUsuarioIdUsuario(Integer idUsuario);
+    List<Prestamo> findByUsuarioIdUsuarioAndEstado(Integer idUsuario, String estado);
     List<Prestamo> findByEstado(String estado);
     List<Prestamo> findByLibroIdLibroAndEstado(Integer idLibro, String estado);
 }
-
