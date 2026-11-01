@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,17 +73,37 @@ public class Libro {
     @JsonIgnoreProperties("libros")
     private List<Autor> autores = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-        name = "tbl_libro_categoria",
-        joinColumns = @JoinColumn(name = "id_libro"),
-        inverseJoinColumns = @JoinColumn(name = "id_categoria")
-    )
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_categoria")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnoreProperties("libros")
-    private List<Categoria> categorias = new ArrayList<>();
+    private Categoria categoria;
 
     @OneToMany(mappedBy = "libro", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("libro")
     private List<ContenidoDigital> contenidosDigitales = new ArrayList<>();
-}
 
+    @OneToMany(mappedBy = "libro", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("libro")
+    private List<Prestamo> prestamos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "libro", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("libro")
+    private List<Reserva> reservas = new ArrayList<>();
+
+    // Métodos auxiliares de compatibilidad para plantillas y DTOs
+    public List<Categoria> getCategorias() {
+        if (this.categoria != null) {
+            return new ArrayList<>(List.of(this.categoria));
+        }
+        return new ArrayList<>();
+    }
+
+    public void setCategorias(List<Categoria> categorias) {
+        if (categorias != null && !categorias.isEmpty()) {
+            this.categoria = categorias.get(0);
+        } else {
+            this.categoria = null;
+        }
+    }
+}

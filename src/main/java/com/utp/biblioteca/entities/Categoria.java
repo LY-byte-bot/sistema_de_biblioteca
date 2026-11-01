@@ -33,8 +33,7 @@ public class Categoria {
     @Column(name = "descripcion", length = 255)
     private String descripcion;
 
-    @ManyToMany(mappedBy = "categorias")
-    @JsonIgnoreProperties("categorias")
+    @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("categoria")
     private List<Libro> libros = new ArrayList<>();
 }
-

@@ -25,11 +25,13 @@ public class LibroController {
     private final LibroRepository libroRepository;
     private final PrestamoRepository prestamoRepository;
 
+    // 1. METODO GET - Listar todos los libros
     @GetMapping
     public ResponseEntity<List<Libro>> listarTodos() {
         return ResponseEntity.ok(libroService.listarTodos());
     }
 
+    // 1. METODO GET - Obtener libro por ID
     @GetMapping("/{id}")
     public ResponseEntity<Libro> obtenerPorId(@PathVariable Integer id) {
         return libroService.obtenerPorId(id)
@@ -42,6 +44,7 @@ public class LibroController {
         return ResponseEntity.ok(libroService.buscarPorFiltros(query));
     }
 
+    // 2. METODO POST - Registrar nuevo libro
     @PostMapping
     public ResponseEntity<?> registrarLibro(@Valid @RequestBody Libro libro, BindingResult result) {
         if (result.hasErrors()) {
@@ -58,6 +61,7 @@ public class LibroController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoLibro);
     }
 
+    // 3. METODO PUT - Actualizar libro enviando ID en la URL (/api/libros/{id})
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarLibro(@PathVariable Integer id, @Valid @RequestBody Libro libro, BindingResult result) {
         if (result.hasErrors()) {
@@ -74,6 +78,16 @@ public class LibroController {
         }
     }
 
+    // 3. METODO PUT - Actualizar libro enviando ID en el cuerpo JSON (/api/libros)
+    @PutMapping
+    public ResponseEntity<?> actualizarLibroSinId(@Valid @RequestBody Libro libro, BindingResult result) {
+        if (libro.getIdLibro() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Debe proporcionar el idLibro en el cuerpo del JSON para actualizar"));
+        }
+        return actualizarLibro(libro.getIdLibro(), libro, result);
+    }
+
+    // 4. METODO DELETE - Eliminar libro por ID
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarLibro(@PathVariable Integer id) {
         if (!libroRepository.existsById(id)) {
@@ -90,4 +104,3 @@ public class LibroController {
         return ResponseEntity.ok(Map.of("mensaje", "Libro eliminado exitosamente"));
     }
 }
-

@@ -18,7 +18,7 @@ public interface LibroRepository extends JpaRepository<Libro, Integer> {
 
     @Query("SELECT DISTINCT l FROM Libro l " +
            "LEFT JOIN l.autores a " +
-           "LEFT JOIN l.categorias c " +
+           "LEFT JOIN l.categoria c " +
            "WHERE LOWER(l.titulo) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(COALESCE(l.resumen, '')) LIKE LOWER(CONCAT('%', :query, '%')) " +
            "OR LOWER(COALESCE(l.editorial, '')) LIKE LOWER(CONCAT('%', :query, '%')) " +
@@ -27,4 +27,3 @@ public interface LibroRepository extends JpaRepository<Libro, Integer> {
            "OR LOWER(c.nombre) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Libro> buscarPorFiltros(@Param("query") String query);
 }
-

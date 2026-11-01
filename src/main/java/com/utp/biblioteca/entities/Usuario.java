@@ -41,11 +41,13 @@ public class Usuario {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    @NotBlank(message = "El rol es obligatorio")
+    @Pattern(regexp = "^(ADMIN|LECTOR|BIBLIOTECARIO)$", message = "El rol solo puede ser ADMIN, LECTOR o BIBLIOTECARIO")
     @Column(name = "rol", nullable = false, length = 50)
-    private String rol;
+    private String rol = "LECTOR";
 
-    @Column(name = "estado", nullable = false, length = 20)
-    private String estado;
+    @Column(name = "estado", nullable = false)
+    private Boolean estado = true;
 
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
@@ -68,8 +70,16 @@ public class Usuario {
         if (this.fechaCreacion == null) {
             this.fechaCreacion = LocalDateTime.now();
         }
-        if (this.estado == null || this.estado.isBlank()) {
-            this.estado = "ACTIVO";
+        if (this.estado == null) {
+            this.estado = true;
+        }
+        if (this.rol != null) {
+            this.rol = this.rol.trim().toUpperCase();
+            if ("ADMINISTRADOR".equals(this.rol)) {
+                this.rol = "ADMIN";
+            }
+        } else {
+            this.rol = "LECTOR";
         }
         if (this.correo != null) {
             this.correo = this.correo.trim().toLowerCase();
@@ -88,4 +98,3 @@ public class Usuario {
         }
     }
 }
-

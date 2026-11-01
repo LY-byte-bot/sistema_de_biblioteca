@@ -15,6 +15,7 @@ import java.util.Optional;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private static final List<String> ROLES_PERMITIDOS = List.of("ADMIN", "LECTOR", "BIBLIOTECARIO");
 
     @Override
     @Transactional
@@ -24,6 +25,17 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         if (usuario.getDni() != null) {
             usuario.setDni(usuario.getDni().trim());
+        }
+
+        if (usuario.getRol() != null) {
+            String r = usuario.getRol().trim().toUpperCase();
+            if ("ADMINISTRADOR".equals(r)) r = "ADMIN";
+            if (!ROLES_PERMITIDOS.contains(r)) {
+                throw new IllegalArgumentException("El rol solo puede ser ADMIN, LECTOR o BIBLIOTECARIO");
+            }
+            usuario.setRol(r);
+        } else {
+            usuario.setRol("LECTOR");
         }
 
         if (usuarioRepository.existsByCorreoIgnoreCase(correoLimpio)) {
@@ -64,9 +76,14 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuario.setTelefono(datos.getTelefono());
             usuario.setDireccion(datos.getDireccion());
             if (datos.getRol() != null && !datos.getRol().isBlank()) {
-                usuario.setRol(datos.getRol());
+                String r = datos.getRol().trim().toUpperCase();
+                if ("ADMINISTRADOR".equals(r)) r = "ADMIN";
+                if (!ROLES_PERMITIDOS.contains(r)) {
+                    throw new IllegalArgumentException("El rol solo puede ser ADMIN, LECTOR o BIBLIOTECARIO");
+                }
+                usuario.setRol(r);
             }
-            if (datos.getEstado() != null && !datos.getEstado().isBlank()) {
+            if (datos.getEstado() != null) {
                 usuario.setEstado(datos.getEstado());
             }
             return usuarioRepository.save(usuario);
@@ -77,10 +94,9 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public boolean darDeBajaUsuario(Integer id) {
         return usuarioRepository.findById(id).map(usuario -> {
-            usuario.setEstado("INACTIVO");
+            usuario.setEstado(false);
             usuarioRepository.save(usuario);
             return true;
         }).orElse(false);
     }
 }
-

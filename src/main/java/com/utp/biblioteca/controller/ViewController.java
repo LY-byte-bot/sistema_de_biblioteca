@@ -10,10 +10,14 @@ import com.utp.biblioteca.service.DevolucionService;
 import com.utp.biblioteca.dto.DevolucionRequestDTO;
 import com.utp.biblioteca.entities.Devolucion;
 import java.math.BigDecimal;
+import java.util.Map;
 import com.utp.biblioteca.service.LibroService;
 import com.utp.biblioteca.service.PrestamoService;
 import com.utp.biblioteca.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -63,6 +67,10 @@ public class ViewController {
             return "login";
         }
         Usuario u = usuarioOpt.get();
+        if (Boolean.FALSE.equals(u.getEstado())) {
+            model.addAttribute("error", "Tu cuenta se encuentra inactiva (estado 0). Contacta al administrador.");
+            return "login";
+        }
         String passIngresada = password != null ? password.trim() : "";
         String passGuardada = u.getPasswordHash() != null ? u.getPasswordHash().trim() : "";
         if (!passIngresada.equals(passGuardada)) {
@@ -75,6 +83,38 @@ public class ViewController {
             return "redirect:/admin/catalogo";
         }
         return "redirect:/catalogo";
+    }
+
+    // Soporte PUT Login para Postman con JSON
+    @PutMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> loginPutJson(@RequestBody Map<String, String> credenciales, jakarta.servlet.http.HttpSession session) {
+        String correo = credenciales.get("correo");
+        String password = credenciales.get("password");
+        if (password == null) {
+            password = credenciales.get("passwordHash");
+        }
+
+        if (correo == null || correo.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "El correo es obligatorio"));
+        }
+        var usuarioOpt = usuarioService.obtenerPorCorreo(correo.trim());
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Usuario no registrado"));
+        }
+        Usuario u = usuarioOpt.get();
+        if (Boolean.FALSE.equals(u.getEstado())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Usuario inactivo (estado 0)"));
+        }
+        String passGuardada = u.getPasswordHash() != null ? u.getPasswordHash().trim() : "";
+        if (password != null && !password.trim().equals(passGuardada)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Contraseña incorrecta"));
+        }
+        session.setAttribute("usuarioActual", u);
+        return ResponseEntity.ok(Map.of(
+            "mensaje", "Login exitoso vía PUT",
+            "usuario", u
+        ));
     }
 
     @GetMapping("/logout")
@@ -98,55 +138,54 @@ public class ViewController {
                                    @RequestParam(name = "passwordHash", required = false) String passwordHash,
                                    @RequestParam(name = "confirmPassword", required = false) String confirmPassword,
                                    Model model) {
+        if (nombre == null || nombre.trim().isEmpty() ||
+            apellidos == null || apellidos.trim().isEmpty() ||
+            dni == null || dni.trim().isEmpty() ||
+            telefono == null || telefono.trim().isEmpty() ||
+            correo == null || correo.trim().isEmpty() ||
+            passwordHash == null || passwordHash.trim().isEmpty()) {
+            model.addAttribute("error", "Todos los campos con asterisco (*) son obligatorios.");
+            return "registro";
+        }
+
+        String nom = nombre.trim();
+        String ape = apellidos.trim();
+        String dniLimpio = dni.trim().replaceAll("\\s+", "");
+        String telLimpio = telefono.trim().replaceAll("[^0-9]", "");
+        String correoLimpio = correo.trim().toLowerCase();
+        String pass = passwordHash.trim();
+        String confPass = confirmPassword != null ? confirmPassword.trim() : "";
+
+        if (!nom.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]{3,75}$")) {
+            model.addAttribute("error", "El nombre debe tener entre 3 y 75 letras y espacios (sin números ni símbolos especiales).");
+            return "registro";
+        }
+        if (!ape.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]{3,75}$")) {
+            model.addAttribute("error", "Los apellidos deben tener entre 3 y 75 letras y espacios (sin números ni símbolos especiales).");
+            return "registro";
+        }
+        if (!dniLimpio.matches("^[0-9]{8}$")) {
+            model.addAttribute("error", "El DNI debe tener exactamente 8 dígitos numéricos.");
+            return "registro";
+        }
+        if (!telLimpio.matches("^[0-9]{9}$")) {
+            model.addAttribute("error", "El celular debe contener exactamente 9 dígitos numéricos.");
+            return "registro";
+        }
+        if (!correoLimpio.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            model.addAttribute("error", "El formato del correo electrónico ingresado no es válido.");
+            return "registro";
+        }
+        if (pass.length() < 6) {
+            model.addAttribute("error", "La contraseña debe tener un mínimo de 6 caracteres.");
+            return "registro";
+        }
+        if (!pass.equals(confPass)) {
+            model.addAttribute("error", "Las contraseñas no coinciden. Por favor verifícalas.");
+            return "registro";
+        }
+
         try {
-            // 1. Validar Nombres y Apellidos (Solo letras y espacios, sin números ni @, etc.)
-            String nom = (nombre != null) ? nombre.trim() : "";
-            String ape = (apellidos != null) ? apellidos.trim() : "";
-            if (nom.isEmpty()) {
-                throw new IllegalArgumentException("El nombre es obligatorio.");
-            }
-            if (ape.isEmpty()) {
-                throw new IllegalArgumentException("Los apellidos son obligatorios.");
-            }
-            String regexLetras = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$";
-            if (!nom.matches(regexLetras)) {
-                throw new IllegalArgumentException("El nombre solo debe contener letras (sin números ni caracteres especiales como @, #, números).");
-            }
-            if (!ape.matches(regexLetras)) {
-                throw new IllegalArgumentException("Los apellidos solo deben contener letras (sin números ni caracteres especiales como @, #, números).");
-            }
-
-            // 2. Validar DNI (Exactamente 8 dígitos numéricos)
-            String dniLimpio = (dni != null) ? dni.trim().replaceAll("\\s+", "") : "";
-            if (!dniLimpio.matches("^[0-9]{8}$")) {
-                throw new IllegalArgumentException("El DNI debe tener exactamente 8 dígitos numéricos.");
-            }
-
-            // 3. Validar Teléfono / Celular (Exactamente 9 dígitos numéricos)
-            String telLimpio = (telefono != null) ? telefono.trim().replaceAll("[^0-9]", "") : "";
-            if (telLimpio.length() == 11 && telLimpio.startsWith("51")) {
-                telLimpio = telLimpio.substring(2);
-            }
-            if (!telLimpio.matches("^[0-9]{9}$")) {
-                throw new IllegalArgumentException("El celular debe tener exactamente 9 dígitos numéricos.");
-            }
-
-            // 4. Validar Correo Electrónico
-            String correoLimpio = (correo != null) ? correo.trim().toLowerCase() : "";
-            if (!correoLimpio.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-                throw new IllegalArgumentException("El formato del correo electrónico es inválido (ejemplo: usuario@correo.com).");
-            }
-
-            // 5. Validar Contraseña y Confirmación
-            String pass = (passwordHash != null) ? passwordHash.trim() : "";
-            String passConf = (confirmPassword != null) ? confirmPassword.trim() : "";
-            if (pass.length() < 6) {
-                throw new IllegalArgumentException("La contraseña debe tener un mínimo de 6 caracteres.");
-            }
-            if (!pass.equals(passConf)) {
-                throw new IllegalArgumentException("Las contraseñas ingresadas no coinciden.");
-            }
-
             Usuario usuario = new Usuario();
             usuario.setNombre(nom + " " + ape);
             usuario.setDni(dniLimpio);
@@ -154,7 +193,7 @@ public class ViewController {
             usuario.setCorreo(correoLimpio);
             usuario.setPasswordHash(pass);
             usuario.setRol("LECTOR");
-            usuario.setEstado("ACTIVO");
+            usuario.setEstado(true); // 1 = activo (booleano)
 
             usuarioService.registrarUsuario(usuario);
             model.addAttribute("mensajeExito", "¡Registro exitoso! Ya puedes iniciar sesión con tu cuenta de lector.");
@@ -171,7 +210,7 @@ public class ViewController {
         }
     }
 
-    // 7.3. Catálogo de Libros
+    // 7.3. Catálogo de Libros (Lector)
     @GetMapping("/catalogo")
     public String catalogo(@RequestParam(name = "query", required = false) String query, Model model) {
         List<Libro> libros;
@@ -187,6 +226,22 @@ public class ViewController {
         return "catalogo";
     }
 
+    // PUT Catálogo Lector: Permite editar el JSON en Postman
+    @PutMapping(value = {"/catalogo", "/catalogo/{id}"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> editarCatalogoJson(@PathVariable(required = false) Integer id, @RequestBody Libro libro) {
+        Integer libroId = (id != null) ? id : libro.getIdLibro();
+        if (libroId == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Debe proporcionar el idLibro en la URL o en el cuerpo JSON"));
+        }
+        try {
+            Libro actualizado = libroService.actualizarLibro(libroId, libro);
+            return ResponseEntity.ok(actualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // 7.4. Información del Libro
     @GetMapping("/libro/{id}")
     public String detalleLibro(@PathVariable Integer id, Model model) {
@@ -198,7 +253,7 @@ public class ViewController {
         return "libro-detalle";
     }
 
-    // 7.5. Préstamos y Multas del Lector (Solo préstamos activos y devoluciones reales)
+    // 7.5. Préstamos y Multas del Lector
     @GetMapping("/prestamos")
     public String misPrestamos(jakarta.servlet.http.HttpSession session, Model model) {
         Usuario usuarioActual = (Usuario) session.getAttribute("usuarioActual");
@@ -207,19 +262,15 @@ public class ViewController {
         BigDecimal totalMulta = BigDecimal.ZERO;
 
         if (usuarioActual != null && usuarioActual.getIdUsuario() != null) {
-            // 1. Obtener ÚNICAMENTE préstamos vigentes/activos (no devueltos)
             prestamosActivos = prestamoService.listarActivosPorUsuario(usuarioActual.getIdUsuario());
-            // 2. Obtener el historial de devoluciones reales del usuario
             devoluciones = devolucionService.listarPorUsuario(usuarioActual.getIdUsuario());
 
-            // 3. Sumar multas de devoluciones históricas
             for (Devolucion d : devoluciones) {
                 if (d.getMontoMulta() != null) {
                     totalMulta = totalMulta.add(d.getMontoMulta());
                 }
             }
 
-            // 4. Sumar mora acumulada de préstamos activos vencidos
             java.time.LocalDate hoy = java.time.LocalDate.now();
             for (Prestamo p : prestamosActivos) {
                 if (p.getFechaVencimiento() != null && p.getFechaVencimiento().isBefore(hoy)) {
@@ -249,16 +300,16 @@ public class ViewController {
             solicitud.setIdLibro(idLibro);
             solicitud.setIdUsuario(usuarioActual.getIdUsuario());
             solicitud.setDiasPrestamo(7);
+
             prestamoService.registrarPrestamo(solicitud);
-            redirectAttributes.addFlashAttribute("mensajeExito", "¡Préstamo solicitado con éxito! El ejemplar ha sido reservado para ti.");
-            return "redirect:/prestamos";
+            redirectAttributes.addFlashAttribute("mensajeExito", "¡Préstamo registrado exitosamente! Recuerda devolverlo en la fecha límite.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "No se pudo realizar el préstamo: " + e.getMessage());
-            return "redirect:/libro/" + idLibro;
         }
+        return "redirect:/prestamos";
     }
 
-    // 7.6. Panel Admin: Préstamos & WhatsApp
+    // 7.6. Panel Admin: Préstamos
     @GetMapping("/admin/prestamos")
     public String adminPrestamos(jakarta.servlet.http.HttpSession session, Model model) {
         if (!esAdminOAutorizado(session)) {
@@ -269,7 +320,47 @@ public class ViewController {
         return "admin-prestamos";
     }
 
-    
+    // PUT Préstamos Admin: Permite editar el JSON en Postman
+    @PutMapping(value = {"/admin/prestamos", "/admin/prestamos/{id}"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> editarAdminPrestamosJson(@PathVariable(required = false) Integer id, @RequestBody Map<String, Object> body) {
+        Integer prestamoId = id;
+        if (prestamoId == null && body.get("idPrestamo") != null) {
+            prestamoId = Integer.valueOf(body.get("idPrestamo").toString());
+        }
+        if (prestamoId == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Debe proporcionar el idPrestamo en la URL o en el cuerpo JSON"));
+        }
+
+        var prestamoOpt = prestamoService.obtenerPorId(prestamoId);
+        if (prestamoOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Préstamo no encontrado con ID: " + prestamoId));
+        }
+        Prestamo prestamo = prestamoOpt.get();
+
+        if (body.containsKey("estado")) {
+            String nuevoEstado = body.get("estado").toString();
+            if ("DEVUELTO".equalsIgnoreCase(nuevoEstado)) {
+                DevolucionRequestDTO devDto = new DevolucionRequestDTO();
+                devDto.setIdPrestamo(prestamoId);
+                devDto.setEstadoEjemplar(body.getOrDefault("estadoEjemplar", "BUENO").toString());
+                devDto.setObservacion(body.getOrDefault("observacion", "Devolución actualizada vía PUT JSON").toString());
+                try {
+                    Devolucion dev = devolucionService.procesarDevolucion(devDto);
+                    return ResponseEntity.ok(Map.of("mensaje", "Préstamo marcado como DEVUELTO con éxito", "devolucion", dev));
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+                }
+            } else {
+                prestamo.setEstado(nuevoEstado);
+            }
+        }
+        if (body.containsKey("fechaVencimiento")) {
+            prestamo.setFechaVencimiento(java.time.LocalDate.parse(body.get("fechaVencimiento").toString()));
+        }
+        return ResponseEntity.ok(Map.of("mensaje", "Préstamo actualizado exitosamente vía PUT", "prestamo", prestamo));
+    }
+
     @GetMapping("/admin/prestamos/devolver")
     public String redirigirDevolucionGet() {
         return "redirect:/admin/prestamos";
@@ -304,8 +395,7 @@ public class ViewController {
         return "redirect:/admin/prestamos";
     }
 
-
-    // 7.7. Panel Admin: Catalogación y Gestión de Libros (Registrar y Dar de Baja)
+    // 7.7. Panel Admin: Catalogación y Gestión de Libros
     @GetMapping("/admin/catalogacion")
     public String adminCatalogacion(@RequestParam(name = "tab", required = false, defaultValue = "formulario") String tab, 
                                     @RequestParam(name = "exito", required = false) Boolean exito,
@@ -358,9 +448,7 @@ public class ViewController {
             }
 
             if (categoriaId != null && categoriaId > 0) {
-                categoriaService.obtenerPorId(categoriaId).ifPresent(cat -> {
-                    libro.setCategorias(new ArrayList<>(List.of(cat)));
-                });
+                categoriaService.obtenerPorId(categoriaId).ifPresent(libro::setCategoria);
             }
 
             if (autorNombre != null && !autorNombre.trim().isEmpty()) {
@@ -379,38 +467,38 @@ public class ViewController {
             }
 
             libroService.registrarLibro(libro);
+            redirectAttributes.addAttribute("tab", "formulario");
             redirectAttributes.addAttribute("exito", true);
-            return "redirect:/admin/catalogacion?tab=inventario";
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            redirectAttributes.addAttribute("error", "Error: Ya existe un libro registrado con este ISBN.");
-            return "redirect:/admin/catalogacion?tab=formulario";
         } catch (Exception e) {
-            redirectAttributes.addAttribute("error", "No se pudo registrar el libro: " + e.getMessage());
-            return "redirect:/admin/catalogacion?tab=formulario";
+            redirectAttributes.addAttribute("tab", "formulario");
+            redirectAttributes.addAttribute("error", "Error al guardar el libro: " + e.getMessage());
         }
+        return "redirect:/admin/catalogacion";
     }
 
     @PostMapping("/admin/libros/eliminar/{id}")
-    public String eliminarLibroAdmin(@PathVariable Integer id, 
-                                     jakarta.servlet.http.HttpSession session,
-                                     RedirectAttributes redirectAttributes) {
+    public String eliminarLibroAdminCatalogacion(@PathVariable Integer id, 
+                                                jakarta.servlet.http.HttpSession session, 
+                                                RedirectAttributes redirectAttributes) {
         if (!esAdminOAutorizado(session)) {
             return "redirect:/login";
         }
         try {
             boolean eliminado = libroService.eliminarLibro(id);
+            redirectAttributes.addAttribute("tab", "bajas");
             if (eliminado) {
                 redirectAttributes.addAttribute("exito", true);
             } else {
                 redirectAttributes.addAttribute("error", "No se encontró el libro solicitado.");
             }
         } catch (Exception e) {
-            redirectAttributes.addAttribute("error", "No se puede dar de baja el libro porque tiene préstamos asociados.");
+            redirectAttributes.addAttribute("tab", "bajas");
+            redirectAttributes.addAttribute("error", "No se puede dar de baja el libro porque tiene préstamos activos asociados.");
         }
-        return "redirect:/admin/catalogacion?tab=inventario";
+        return "redirect:/admin/catalogacion";
     }
 
-    // 7.8. Telemetría Actuator
+    // 7.8. Panel Admin: Telemetría
     @GetMapping("/admin/telemetria")
     public String adminTelemetria(jakarta.servlet.http.HttpSession session, Model model) {
         if (!esAdminOAutorizado(session)) {
@@ -447,7 +535,8 @@ public class ViewController {
 
         if (categoriaId != null && categoriaId > 0) {
             libros = libros.stream()
-                    .filter(l -> l.getCategorias() != null && l.getCategorias().stream().anyMatch(c -> c.getIdCategoria().equals(categoriaId)))
+                    .filter(l -> (l.getCategoria() != null && l.getCategoria().getIdCategoria().equals(categoriaId))
+                            || (l.getCategorias() != null && l.getCategorias().stream().anyMatch(c -> c.getIdCategoria().equals(categoriaId))))
                     .toList();
         }
 
@@ -483,6 +572,22 @@ public class ViewController {
         return "admin-catalogo";
     }
 
+    // PUT Catálogo Admin: Permite editar el JSON en Postman
+    @PutMapping(value = {"/admin/catalogo", "/admin/catalogo/{id}"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> editarAdminCatalogoJson(@PathVariable(required = false) Integer id, @RequestBody Libro libro) {
+        Integer libroId = (id != null) ? id : libro.getIdLibro();
+        if (libroId == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Debe proporcionar el idLibro en la URL o en el cuerpo JSON"));
+        }
+        try {
+            Libro actualizado = libroService.actualizarLibro(libroId, libro);
+            return ResponseEntity.ok(actualizado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/admin/catalogo/editar/{id}")
     public String editarLibroAdmin(
             @PathVariable Integer id,
@@ -497,9 +602,7 @@ public class ViewController {
         }
         try {
             if (categoriaId != null && categoriaId > 0) {
-                categoriaService.obtenerPorId(categoriaId).ifPresent(cat -> {
-                    libroForm.setCategorias(new ArrayList<>(List.of(cat)));
-                });
+                categoriaService.obtenerPorId(categoriaId).ifPresent(libroForm::setCategoria);
             }
 
             if (autorId != null && autorId > 0) {

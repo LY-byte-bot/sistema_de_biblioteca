@@ -13,17 +13,18 @@
 -- =============================================================================
 
 -- 1. Habilitar Row Level Security en todas las tablas
-ALTER TABLE tbl_autor ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_categoria ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_contenido_digital ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_devolucion ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_historial_busqueda ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_libro ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_libro_autor ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_libro_categoria ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_prestamo ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_reserva ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tbl_usuario ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_autor ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_categoria ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_contenido_digital ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_devolucion ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_historial_busqueda ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_libro ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_libro_autor ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_libro_categoria ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_prestamo ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_reserva ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_usuario ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS tbl_rol ENABLE ROW LEVEL SECURITY;
 
 -- 2. Crear políticas permisivas de lectura y escritura para cada tabla
 -- Esto permite que las consultas SELECT, INSERT, UPDATE y DELETE funcionen sin restricción.
@@ -41,11 +42,14 @@ DECLARE
         'tbl_libro_categoria',
         'tbl_prestamo',
         'tbl_reserva',
-        'tbl_usuario'
+        'tbl_usuario',
+        'tbl_rol'
     ];
 BEGIN
     FOREACH tbl IN ARRAY tablas LOOP
-        EXECUTE format('DROP POLICY IF EXISTS "Politica_acceso_total_%s" ON %I', tbl, tbl);
-        EXECUTE format('CREATE POLICY "Politica_acceso_total_%s" ON %I FOR ALL USING (true) WITH CHECK (true)', tbl, tbl);
+        IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = tbl) THEN
+            EXECUTE format('DROP POLICY IF EXISTS "Politica_acceso_total_%s" ON %I', tbl, tbl);
+            EXECUTE format('CREATE POLICY "Politica_acceso_total_%s" ON %I FOR ALL USING (true) WITH CHECK (true)', tbl, tbl);
+        END IF;
     END LOOP;
 END $$;

@@ -66,8 +66,10 @@ public class LibroServiceImpl implements LibroService {
             if (libroActualizado.getAutores() != null && !libroActualizado.getAutores().isEmpty()) {
                 libroExistente.setAutores(libroActualizado.getAutores());
             }
-            if (libroActualizado.getCategorias() != null && !libroActualizado.getCategorias().isEmpty()) {
-                libroExistente.setCategorias(libroActualizado.getCategorias());
+            if (libroActualizado.getCategoria() != null) {
+                libroExistente.setCategoria(libroActualizado.getCategoria());
+            } else if (libroActualizado.getCategorias() != null && !libroActualizado.getCategorias().isEmpty()) {
+                libroExistente.setCategoria(libroActualizado.getCategorias().get(0));
             }
             if (libroActualizado.getContenidosDigitales() != null) {
                 libroActualizado.getContenidosDigitales().forEach(cd -> cd.setLibro(libroExistente));
@@ -98,4 +100,3 @@ public class LibroServiceImpl implements LibroService {
         return false;
     }
 }
-

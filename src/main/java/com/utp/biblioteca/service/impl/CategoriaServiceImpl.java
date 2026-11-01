@@ -33,5 +33,10 @@ public class CategoriaServiceImpl implements CategoriaService {
     public Optional<Categoria> obtenerPorId(Integer id) {
         return categoriaRepository.findById(id);
     }
-}
 
+    @Override
+    @Transactional
+    public void eliminarCategoria(Integer id) {
+        categoriaRepository.deleteById(id);
+    }
+}

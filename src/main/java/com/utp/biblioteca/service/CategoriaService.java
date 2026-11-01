@@ -9,5 +9,5 @@ public interface CategoriaService {
     List<Categoria> listarCategorias();
     Categoria registrarCategoria(Categoria categoria);
     Optional<Categoria> obtenerPorId(Integer id);
+    void eliminarCategoria(Integer id);
 }
-
