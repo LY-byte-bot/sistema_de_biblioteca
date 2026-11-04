@@ -9,5 +9,7 @@ public interface AutorService {
     List<Autor> listarAutores();
     Autor registrarAutor(Autor autor);
     Optional<Autor> obtenerPorId(Integer id);
+    Autor actualizarAutor(Integer id, Autor autor);
+    boolean eliminarAutor(Integer id);
 }
 

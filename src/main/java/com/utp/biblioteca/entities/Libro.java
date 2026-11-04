@@ -1,5 +1,6 @@
 package com.utp.biblioteca.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -92,6 +93,7 @@ public class Libro {
     private List<Reserva> reservas = new ArrayList<>();
 
     // Métodos auxiliares de compatibilidad para plantillas y DTOs
+    @JsonIgnore
     public List<Categoria> getCategorias() {
         if (this.categoria != null) {
             return new ArrayList<>(List.of(this.categoria));

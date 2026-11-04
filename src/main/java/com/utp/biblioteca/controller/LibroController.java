@@ -44,9 +44,15 @@ public class LibroController {
         return ResponseEntity.ok(libroService.buscarPorFiltros(query));
     }
 
-    // 2. METODO POST - Registrar nuevo libro
+    // 2. METODO POST - Registrar nuevo libro (con validaciones y seguridad de rol)
     @PostMapping
-    public ResponseEntity<?> registrarLibro(@Valid @RequestBody Libro libro, BindingResult result) {
+    public ResponseEntity<?> registrarLibro(@Valid @RequestBody Libro libro, 
+                                            BindingResult result,
+                                            @RequestHeader(name = "X-Rol", required = false) String xRol) {
+        if (xRol != null && xRol.trim().equalsIgnoreCase("LECTOR")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Acceso denegado: El rol LECTOR no tiene permisos para crear libros. Se requiere rol ADMIN o BIBLIOTECARIO."));
+        }
         if (result.hasErrors()) {
             Map<String, String> errores = new HashMap<>();
             result.getFieldErrors().forEach(err -> errores.put(err.getField(), err.getDefaultMessage()));
@@ -63,7 +69,14 @@ public class LibroController {
 
     // 3. METODO PUT - Actualizar libro enviando ID en la URL (/api/libros/{id})
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarLibro(@PathVariable Integer id, @Valid @RequestBody Libro libro, BindingResult result) {
+    public ResponseEntity<?> actualizarLibro(@PathVariable Integer id, 
+                                             @Valid @RequestBody Libro libro, 
+                                             BindingResult result,
+                                             @RequestHeader(name = "X-Rol", required = false) String xRol) {
+        if (xRol != null && xRol.trim().equalsIgnoreCase("LECTOR")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Acceso denegado: El rol LECTOR no tiene permisos para actualizar libros. Se requiere rol ADMIN o BIBLIOTECARIO."));
+        }
         if (result.hasErrors()) {
             Map<String, String> errores = new HashMap<>();
             result.getFieldErrors().forEach(err -> errores.put(err.getField(), err.getDefaultMessage()));
@@ -80,16 +93,24 @@ public class LibroController {
 
     // 3. METODO PUT - Actualizar libro enviando ID en el cuerpo JSON (/api/libros)
     @PutMapping
-    public ResponseEntity<?> actualizarLibroSinId(@Valid @RequestBody Libro libro, BindingResult result) {
+    public ResponseEntity<?> actualizarLibroSinId(@Valid @RequestBody Libro libro, 
+                                                 BindingResult result,
+                                                 @RequestHeader(name = "X-Rol", required = false) String xRol) {
         if (libro.getIdLibro() == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Debe proporcionar el idLibro en el cuerpo del JSON para actualizar"));
         }
-        return actualizarLibro(libro.getIdLibro(), libro, result);
+        return actualizarLibro(libro.getIdLibro(), libro, result, xRol);
     }
 
-    // 4. METODO DELETE - Eliminar libro por ID
+    // 4. METODO DELETE - Eliminar libro por ID (con seguridad de integridad y rol)
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarLibro(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarLibro(@PathVariable Integer id,
+                                          @RequestHeader(name = "X-Rol", required = false) String xRol) {
+        if (xRol != null && xRol.trim().equalsIgnoreCase("LECTOR")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Acceso denegado: El rol LECTOR no tiene permisos para dar de baja libros. Se requiere rol ADMIN o BIBLIOTECARIO."));
+        }
+
         if (!libroRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Libro no encontrado con ID: " + id));
         }

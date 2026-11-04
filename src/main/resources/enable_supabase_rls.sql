@@ -12,7 +12,10 @@
 -- 3. Pega este contenido y presiona "Run".
 -- =============================================================================
 
--- 1. Habilitar Row Level Security en todas las tablas
+-- 0. Asegurar eliminación de tabla intermedia eliminada
+DROP TABLE IF EXISTS tbl_libro_categoria CASCADE;
+
+-- 1. Habilitar Row Level Security en todas las tablas oficiales
 ALTER TABLE IF EXISTS tbl_autor ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tbl_categoria ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tbl_contenido_digital ENABLE ROW LEVEL SECURITY;
@@ -20,7 +23,6 @@ ALTER TABLE IF EXISTS tbl_devolucion ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tbl_historial_busqueda ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tbl_libro ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tbl_libro_autor ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS tbl_libro_categoria ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tbl_prestamo ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tbl_reserva ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS tbl_usuario ENABLE ROW LEVEL SECURITY;
@@ -39,7 +41,6 @@ DECLARE
         'tbl_historial_busqueda',
         'tbl_libro',
         'tbl_libro_autor',
-        'tbl_libro_categoria',
         'tbl_prestamo',
         'tbl_reserva',
         'tbl_usuario',
@@ -48,8 +49,8 @@ DECLARE
 BEGIN
     FOREACH tbl IN ARRAY tablas LOOP
         IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = tbl) THEN
-            EXECUTE format('DROP POLICY IF EXISTS "Politica_acceso_total_%s" ON %I', tbl, tbl);
-            EXECUTE format('CREATE POLICY "Politica_acceso_total_%s" ON %I FOR ALL USING (true) WITH CHECK (true)', tbl, tbl);
+            EXECUTE format('DROP POLICY IF EXISTS %I ON %I;', 'Politica_acceso_total_' || tbl, tbl);
+            EXECUTE format('CREATE POLICY %I ON %I FOR ALL USING (true) WITH CHECK (true);', 'Politica_acceso_total_' || tbl, tbl);
         END IF;
     END LOOP;
 END $$;

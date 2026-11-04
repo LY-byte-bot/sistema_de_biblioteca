@@ -30,7 +30,7 @@ BEGIN
 END $$;
 
 
--- 2. Crear nueva tabla rol (tbl_rol y rol) con los 3 roles
+-- 2. Crear nueva tabla rol (tbl_rol) con los 3 roles oficiales
 CREATE TABLE IF NOT EXISTS tbl_rol (
     id_rol SERIAL PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL UNIQUE,
@@ -65,23 +65,36 @@ BEGIN
 END $$;
 
 
--- 3. ON DELETE CASCADE completo en Supabase
--- 3.1. Restricción en tbl_libro_categoria hacia tbl_categoria y tbl_libro
-ALTER TABLE IF EXISTS tbl_libro_categoria DROP CONSTRAINT IF EXISTS fklrletiqlvrbsfv1cjunrj5vpd;
-ALTER TABLE IF EXISTS tbl_libro_categoria ADD CONSTRAINT fklrletiqlvrbsfv1cjunrj5vpd 
-    FOREIGN KEY (id_categoria) REFERENCES tbl_categoria(id_categoria) ON DELETE CASCADE;
-
-ALTER TABLE IF EXISTS tbl_libro_categoria DROP CONSTRAINT IF EXISTS fk5a0ddto89a2d81lxumg8eufxh;
-ALTER TABLE IF EXISTS tbl_libro_categoria ADD CONSTRAINT fk5a0ddto89a2d81lxumg8eufxh 
-    FOREIGN KEY (id_libro) REFERENCES tbl_libro(id_libro) ON DELETE CASCADE;
-
--- 3.2. Restricción en tbl_libro hacia tbl_categoria
+-- 3. ELIMINACIÓN DE LA TABLA INTERMEDIA (tbl_libro_categoria) Y RELACIÓN DIRECTA 1 A N
+-- 3.1. Asegurar columna id_categoria en tbl_libro
 ALTER TABLE IF EXISTS tbl_libro ADD COLUMN IF NOT EXISTS id_categoria INTEGER;
-ALTER TABLE IF EXISTS tbl_libro DROP CONSTRAINT IF EXISTS fkk0qwejyncoxt5ltr95tx2g57m;
-ALTER TABLE IF EXISTS tbl_libro ADD CONSTRAINT fkk0qwejyncoxt5ltr95tx2g57m 
-    FOREIGN KEY (id_categoria) REFERENCES tbl_categoria(id_categoria) ON DELETE CASCADE;
 
--- 3.3. Restricciones hijas de tbl_libro para borrado en cascada sin bloqueos
+-- 3.2. Migrar relaciones de tbl_libro_categoria hacia tbl_libro (si la tabla intermedia aún existe)
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'tbl_libro_categoria') THEN
+        UPDATE tbl_libro l
+        SET id_categoria = lc.id_categoria
+        FROM tbl_libro_categoria lc
+        WHERE l.id_libro = lc.id_libro AND l.id_categoria IS NULL;
+    END IF;
+END $$;
+
+-- 3.3. ELIMINAR definitivamente la tabla intermedia tbl_libro_categoria
+DROP TABLE IF EXISTS tbl_libro_categoria CASCADE;
+
+-- 3.4. Restricción Foreign Key directa entre tbl_libro y tbl_categoria (1 a N)
+DO $$
+BEGIN
+    ALTER TABLE tbl_libro DROP CONSTRAINT IF EXISTS fkk0qwejyncoxt5ltr95tx2g57m;
+    ALTER TABLE tbl_libro DROP CONSTRAINT IF EXISTS fk_libro_categoria;
+    ALTER TABLE tbl_libro 
+        ADD CONSTRAINT fk_libro_categoria 
+        FOREIGN KEY (id_categoria) REFERENCES tbl_categoria(id_categoria) 
+        ON DELETE SET NULL;
+END $$;
+
+-- 3.5. Restricciones de borrado en cascada en las entidades hijas de tbl_libro
 ALTER TABLE IF EXISTS tbl_libro_autor DROP CONSTRAINT IF EXISTS fk7lixlvd7mqftcgtnnaoyxf8rq;
 ALTER TABLE IF EXISTS tbl_libro_autor ADD CONSTRAINT fk7lixlvd7mqftcgtnnaoyxf8rq 
     FOREIGN KEY (id_libro) REFERENCES tbl_libro(id_libro) ON DELETE CASCADE;
@@ -98,7 +111,7 @@ ALTER TABLE IF EXISTS tbl_reserva DROP CONSTRAINT IF EXISTS fk4u90v1h9sg5cyrkn12
 ALTER TABLE IF EXISTS tbl_reserva ADD CONSTRAINT fk4u90v1h9sg5cyrkn12h37over 
     FOREIGN KEY (id_libro) REFERENCES tbl_libro(id_libro) ON DELETE CASCADE;
 
--- 3.4. Restricción de devolución hacia préstamo
+-- 3.6. Restricción de devolución hacia préstamo
 ALTER TABLE IF EXISTS tbl_devolucion DROP CONSTRAINT IF EXISTS fkh0prf0lujjmeykxjrmr6if1q5;
 ALTER TABLE IF EXISTS tbl_devolucion ADD CONSTRAINT fkh0prf0lujjmeykxjrmr6if1q5 
     FOREIGN KEY (id_prestamo) REFERENCES tbl_prestamo(id_prestamo) ON DELETE CASCADE;

@@ -33,5 +33,25 @@ public class AutorServiceImpl implements AutorService {
     public Optional<Autor> obtenerPorId(Integer id) {
         return autorRepository.findById(id);
     }
+
+    @Override
+    @Transactional
+    public Autor actualizarAutor(Integer id, Autor autorActualizado) {
+        return autorRepository.findById(id).map(existente -> {
+            existente.setNombres(autorActualizado.getNombres());
+            existente.setApellidos(autorActualizado.getApellidos());
+            return autorRepository.save(existente);
+        }).orElseThrow(() -> new RuntimeException("Autor no encontrado con ID: " + id));
+    }
+
+    @Override
+    @Transactional
+    public boolean eliminarAutor(Integer id) {
+        if (autorRepository.existsById(id)) {
+            autorRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
 }
 

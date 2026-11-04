@@ -3,6 +3,7 @@ package com.utp.biblioteca.entities;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,11 +28,13 @@ public class Autor {
 
     @NotBlank(message = "Los nombres son obligatorios")
     @Size(max = 100, message = "Máximo 100 caracteres")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$", message = "Los nombres solo deben contener letras y espacios")
     @Column(name = "nombres", nullable = false, length = 100)
     private String nombres;
 
     @NotBlank(message = "Los apellidos son obligatorios")
     @Size(max = 100, message = "Máximo 100 caracteres")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$", message = "Los apellidos solo deben contener letras y espacios")
     @Column(name = "apellidos", nullable = false, length = 100)
     private String apellidos;
 
