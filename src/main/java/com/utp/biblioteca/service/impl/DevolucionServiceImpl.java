@@ -4,9 +4,11 @@ import com.utp.biblioteca.dto.DevolucionRequestDTO;
 import com.utp.biblioteca.entities.Devolucion;
 import com.utp.biblioteca.entities.Libro;
 import com.utp.biblioteca.entities.Prestamo;
+import com.utp.biblioteca.entities.Reserva;
 import com.utp.biblioteca.repository.DevolucionRepository;
 import com.utp.biblioteca.repository.LibroRepository;
 import com.utp.biblioteca.repository.PrestamoRepository;
+import com.utp.biblioteca.repository.ReservaRepository;
 import com.utp.biblioteca.service.DevolucionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class DevolucionServiceImpl implements DevolucionService {
     private final DevolucionRepository devolucionRepository;
     private final PrestamoRepository prestamoRepository;
     private final LibroRepository libroRepository;
+    private final ReservaRepository reservaRepository;
 
     @Override
     @Transactional
@@ -58,6 +61,14 @@ public class DevolucionServiceImpl implements DevolucionService {
             int stockActual = libro.getStockDisponible() != null ? libro.getStockDisponible() : 0;
             libro.setStockDisponible(stockActual + 1);
             libroRepository.save(libro);
+
+            // Verificar si hay lectores en cola de espera para este libro
+            List<Reserva> reservasPendientes = reservaRepository.findByLibroIdLibroAndEstadoOrderByFechaSolicitudAsc(libro.getIdLibro(), "PENDIENTE");
+            if (!reservasPendientes.isEmpty()) {
+                Reserva primera = reservasPendientes.get(0);
+                primera.setEstado("LISTO_PARA_RECOJO");
+                reservaRepository.save(primera);
+            }
         }
 
         // Crear registro de devolución

@@ -33,6 +33,15 @@ public class PrestamoServiceImpl implements PrestamoService {
         Libro libro = libroRepository.findById(solicitud.getIdLibro())
                 .orElseThrow(() -> new IllegalArgumentException("Libro no encontrado con ID: " + solicitud.getIdLibro()));
 
+        // Validar si el usuario tiene préstamos vencidos pendientes de devolución (Regla BPMN)
+        List<Prestamo> prestamosActivos = prestamoRepository.findByUsuarioIdUsuarioAndEstado(solicitud.getIdUsuario(), "ACTIVO");
+        LocalDate hoy = LocalDate.now();
+        boolean tieneMora = prestamosActivos.stream()
+                .anyMatch(p -> p.getFechaVencimiento() != null && p.getFechaVencimiento().isBefore(hoy));
+        if (tieneMora) {
+            throw new IllegalStateException("No puedes solicitar nuevos préstamos porque mantienes ejemplares vencidos con mora pendiente de devolución. Por favor devuélvelos en mostrador.");
+        }
+
         if (libro.getStockDisponible() == null || libro.getStockDisponible() <= 0) {
             throw new IllegalStateException("No hay stock disponible para prestar el libro: " + libro.getTitulo());
         }
