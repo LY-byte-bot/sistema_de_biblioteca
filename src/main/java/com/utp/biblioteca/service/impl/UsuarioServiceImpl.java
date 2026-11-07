@@ -4,6 +4,7 @@ import com.utp.biblioteca.entities.Usuario;
 import com.utp.biblioteca.repository.UsuarioRepository;
 import com.utp.biblioteca.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.Optional;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
     private static final List<String> ROLES_PERMITIDOS = List.of("ADMIN", "LECTOR", "BIBLIOTECARIO");
 
     @Override
@@ -44,6 +46,15 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (usuario.getDni() != null && !usuario.getDni().isBlank() && usuarioRepository.existsByDni(usuario.getDni())) {
             throw new IllegalArgumentException("Ya existe un usuario con el DNI: " + usuario.getDni());
         }
+
+        // Encriptar contraseña con BCrypt de Spring Security si aún no está encriptada
+        if (usuario.getPasswordHash() != null && !usuario.getPasswordHash().isBlank()) {
+            String passRaw = usuario.getPasswordHash().trim();
+            if (!passRaw.startsWith("$2a$") && !passRaw.startsWith("$2b$") && !passRaw.startsWith("$2y$")) {
+                usuario.setPasswordHash(passwordEncoder.encode(passRaw));
+            }
+        }
+
         return usuarioRepository.save(usuario);
     }
 
@@ -85,6 +96,14 @@ public class UsuarioServiceImpl implements UsuarioService {
             }
             if (datos.getEstado() != null) {
                 usuario.setEstado(datos.getEstado());
+            }
+            if (datos.getPasswordHash() != null && !datos.getPasswordHash().isBlank()) {
+                String raw = datos.getPasswordHash().trim();
+                if (!raw.startsWith("$2a$") && !raw.startsWith("$2b$") && !raw.startsWith("$2y$")) {
+                    usuario.setPasswordHash(passwordEncoder.encode(raw));
+                } else {
+                    usuario.setPasswordHash(raw);
+                }
             }
             return usuarioRepository.save(usuario);
         }).orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));

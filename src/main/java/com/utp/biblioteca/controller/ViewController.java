@@ -14,6 +14,7 @@ import java.util.Map;
 import com.utp.biblioteca.service.LibroService;
 import com.utp.biblioteca.service.PrestamoService;
 import com.utp.biblioteca.service.UsuarioService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,10 +37,19 @@ public class ViewController {
     private final DevolucionService devolucionService;
     private final CategoriaService categoriaService;
     private final AutorService autorService;
+    private final PasswordEncoder passwordEncoder;
 
     // 7.1. Login y Verificación de Roles
     @GetMapping({"/", "/login"})
-    public String login() {
+    public String login(@RequestParam(name = "error", required = false) String error,
+                        @RequestParam(name = "logout", required = false) String logout,
+                        Model model) {
+        if (error != null) {
+            model.addAttribute("error", "Credenciales incorrectas o cuenta inactiva. Verifica tus datos.");
+        }
+        if (logout != null) {
+            model.addAttribute("mensajeExito", "Has cerrado sesiÃ³n correctamente.");
+        }
         return "login";
     }
 
@@ -49,40 +59,6 @@ public class ViewController {
         if (u == null || u.getRol() == null) return false;
         String rol = u.getRol().toUpperCase().trim();
         return rol.contains("ADMIN") || rol.contains("BIBLIOTECARIO");
-    }
-
-    @PostMapping("/login")
-    public String procesarLogin(@RequestParam(name = "correo", required = false) String correo,
-                                @RequestParam(name = "password", required = false) String password,
-                                jakarta.servlet.http.HttpSession session,
-                                Model model) {
-        if (correo == null || correo.trim().isEmpty()) {
-            model.addAttribute("error", "Por favor ingresa tu correo electrónico.");
-            return "login";
-        }
-        String correoLimpio = correo.trim();
-        var usuarioOpt = usuarioService.obtenerPorCorreo(correoLimpio);
-        if (usuarioOpt.isEmpty()) {
-            model.addAttribute("error", "Usuario no registrado con ese correo electrónico.");
-            return "login";
-        }
-        Usuario u = usuarioOpt.get();
-        if (Boolean.FALSE.equals(u.getEstado())) {
-            model.addAttribute("error", "Tu cuenta se encuentra inactiva (estado 0). Contacta al administrador.");
-            return "login";
-        }
-        String passIngresada = password != null ? password.trim() : "";
-        String passGuardada = u.getPasswordHash() != null ? u.getPasswordHash().trim() : "";
-        if (!passIngresada.equals(passGuardada)) {
-            model.addAttribute("error", "Contraseña incorrecta. Por favor verifica tus credenciales.");
-            return "login";
-        }
-        session.setAttribute("usuarioActual", u);
-        String rol = u.getRol() != null ? u.getRol().toUpperCase().trim() : "LECTOR";
-        if (rol.contains("ADMIN") || rol.contains("BIBLIOTECARIO")) {
-            return "redirect:/admin/catalogo";
-        }
-        return "redirect:/catalogo";
     }
 
     // Soporte PUT Login para Postman con JSON
@@ -107,20 +83,24 @@ public class ViewController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Usuario inactivo (estado 0)"));
         }
         String passGuardada = u.getPasswordHash() != null ? u.getPasswordHash().trim() : "";
-        if (password != null && !password.trim().equals(passGuardada)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Contraseña incorrecta"));
+        String passIngresada = password != null ? password.trim() : "";
+        boolean coincide = passwordEncoder.matches(passIngresada, passGuardada) || passIngresada.equals(passGuardada);
+        if (!coincide) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "ContraseÃ±a incorrecta"));
         }
         session.setAttribute("usuarioActual", u);
         return ResponseEntity.ok(Map.of(
-            "mensaje", "Login exitoso vía PUT",
+            "mensaje", "Login exitoso vÃ­a PUT",
             "usuario", u
         ));
     }
 
-    @GetMapping("/logout")
-    public String logout(jakarta.servlet.http.HttpSession session) {
-        session.invalidate();
-        return "redirect:/login";
+        @GetMapping("/logout")
+    public String logout(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler logoutHandler = 
+            new org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler();
+        logoutHandler.logout(request, response, org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+        return "redirect:/login?logout=true";
     }
 
     // 7.2. Registro

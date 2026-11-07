@@ -34,16 +34,18 @@
                     <div class="wire-header-line mb-4"></div>
 
                     <!-- Alerta de Error de Inicio de Sesión -->
-                    <div th:if="${error}" class="alert alert-danger py-2 small mb-3">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i> <span th:text="${error}"></span>
+                    <div th:if="${error != null or param.error != null}" class="alert alert-danger py-2 small mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <span th:text="${error != null ? error : 'Credenciales incorrectas o cuenta inactiva. Verifica tus datos.'}"></span>
                     </div>
 
-                    <!-- Mensaje de Éxito si viene de registro -->
-                    <div th:if="${mensajeExito}" class="alert alert-success py-2 small mb-3">
-                        <i class="bi bi-check-circle-fill me-1"></i> <span th:text="${mensajeExito}"></span>
+                    <!-- Mensaje de Éxito si viene de registro o logout -->
+                    <div th:if="${mensajeExito != null or param.logout != null}" class="alert alert-success py-2 small mb-3">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        <span th:text="${mensajeExito != null ? mensajeExito : 'Has cerrado sesión correctamente.'}"></span>
                     </div>
 
-                    <!-- Formulario de Login -->
+                    <!-- Formulario de Login (Spring Security formLogin) -->
                     <form th:action="@{/login}" method="post">
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-dark">Correo Electrónico:</label>
@@ -57,13 +59,13 @@
 
                         <div class="d-flex justify-content-between align-items-center mb-4 small">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="recordarSesion" checked>
+                                <input class="form-check-input" type="checkbox" id="recordarSesion" name="remember-me" checked>
                                 <label class="form-check-label text-dark" for="recordarSesion">Recordar sesión</label>
                             </div>
                             <a href="#" onclick="alert('Para recuperar tu contraseña, acércate con tu DNI al mostrador de la biblioteca.'); return false;" class="text-decoration-underline text-primary">¿Olvidaste tu contraseña?</a>
                         </div>
 
-                        <!-- Botón modificado: "Iniciar Sesión →" (SIN JWT Auth) -->
+                        <!-- Botón Iniciar Sesión con Spring Security -->
                         <button type="submit" class="btn btn-wire-blue py-2 w-100 mb-4 fs-6">
                             Iniciar Sesión &rarr;
                         </button>

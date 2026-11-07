@@ -3,6 +3,7 @@ package com.utp.biblioteca.controller;
 import com.utp.biblioteca.entities.Usuario;
 import com.utp.biblioteca.repository.UsuarioRepository;
 import com.utp.biblioteca.service.UsuarioService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 1. GET - Listar todos los usuarios
     @GetMapping
@@ -72,7 +74,9 @@ public class UsuarioController {
         }
 
         String passGuardada = (u.getPasswordHash() != null) ? u.getPasswordHash().trim() : "";
-        if (!password.trim().equals(passGuardada)) {
+        String passIngresada = password.trim();
+        boolean match = passwordEncoder.matches(passIngresada, passGuardada) || passIngresada.equals(passGuardada);
+        if (!match) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Credenciales incorrectas: Contraseña inválida"));
         }
