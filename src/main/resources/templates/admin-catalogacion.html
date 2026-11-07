@@ -135,10 +135,41 @@
                         <textarea name="resumen" class="form-control" rows="3" placeholder="Texto descriptivo y temático del material..."></textarea>
                     </div>
 
+                    <!-- Selector de Extracto PDF -->
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-dark">Archivo Digital (Extracto / Muestra PDF):</label>
-                        <input type="file" name="archivoPdf" accept=".pdf" class="form-control">
-                        <div class="form-text small text-muted">Sube el documento en PDF del libro. Estará disponible para que los lectores lo descarguen desde la ficha del catálogo.</div>
+                        <label class="form-label small fw-bold text-dark">Extracto PDF para Lectores:</label>
+                        <div class="p-3 border rounded-3 bg-light">
+                            <div class="form-text small text-muted mb-2">
+                                <i class="bi bi-info-circle me-1"></i>
+                                El extracto PDF estara disponible para que los lectores lo descarguen desde el catalogo.
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="tipoExtracto" id="tipoDefault_new"
+                                       value="DEFAULT" checked
+                                       onchange="toggleArchivoPdf(false)">
+                                <label class="form-check-label small fw-semibold" for="tipoDefault_new">
+                                    <i class="bi bi-file-earmark-pdf text-secondary me-1"></i>
+                                    Generar automaticamente (extracto con datos del libro)
+                                </label>
+                                <div class="form-text ms-4" style="font-size:0.78rem;">Se genera un PDF con la informacion bibliografica del libro cada vez que se solicite.</div>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipoExtracto" id="tipoPersonalizado_new"
+                                       value="PERSONALIZADO"
+                                       onchange="toggleArchivoPdf(true)">
+                                <label class="form-check-label small fw-semibold" for="tipoPersonalizado_new">
+                                    <i class="bi bi-upload text-primary me-1"></i>
+                                    Subir extracto personalizado (PDF propio)
+                                </label>
+                                <div class="form-text ms-4" style="font-size:0.78rem;">Sube un archivo PDF con el contenido que deseas mostrar a los lectores (max. 15 MB).</div>
+                            </div>
+                            <div id="contenedorArchivoPdf" style="display:none;" class="mt-3 ms-4">
+                                <input type="file" id="inputArchivoPdf" name="archivoPdf" accept=".pdf" class="form-control form-control-sm">
+                                <div class="form-text text-danger small mt-1">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Solo archivos .pdf - maximo 15 MB
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
