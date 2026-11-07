@@ -1,31 +1,39 @@
 package com.utp.biblioteca.controller;
 
-import com.utp.biblioteca.entities.Autor;
-import com.utp.biblioteca.entities.Libro;
-import com.utp.biblioteca.entities.Prestamo;
-import com.utp.biblioteca.entities.Usuario;
-import com.utp.biblioteca.service.AutorService;
-import com.utp.biblioteca.service.CategoriaService;
-import com.utp.biblioteca.service.DevolucionService;
 import com.utp.biblioteca.dto.DevolucionRequestDTO;
-import com.utp.biblioteca.entities.Devolucion;
-import java.math.BigDecimal;
-import java.util.Map;
-import com.utp.biblioteca.service.LibroService;
-import com.utp.biblioteca.service.PrestamoService;
-import com.utp.biblioteca.service.UsuarioService;
+import com.utp.biblioteca.dto.PrestamoRequestDTO;
+import com.utp.biblioteca.dto.ReservaRequestDTO;
+import com.utp.biblioteca.entities.*;
+import com.utp.biblioteca.repository.ContenidoDigitalRepository;
+import com.utp.biblioteca.repository.HistorialBusquedaRepository;
+import com.utp.biblioteca.repository.PrestamoRepository;
+import com.utp.biblioteca.service.*;
+import com.utp.biblioteca.util.PdfGenerator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.lang.management.ManagementFactory;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor
@@ -35,9 +43,13 @@ public class ViewController {
     private final UsuarioService usuarioService;
     private final PrestamoService prestamoService;
     private final DevolucionService devolucionService;
+    private final ReservaService reservaService;
     private final CategoriaService categoriaService;
     private final AutorService autorService;
     private final PasswordEncoder passwordEncoder;
+    private final ContenidoDigitalRepository contenidoDigitalRepository;
+    private final HistorialBusquedaRepository historialBusquedaRepository;
+    private final PrestamoRepository prestamoRepository;
 
     // 7.1. Login y Verificación de Roles
     @GetMapping({"/", "/login"})
@@ -88,22 +100,30 @@ public class ViewController {
         if (!coincide) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "ContraseÃ±a incorrecta"));
         }
+
         session.setAttribute("usuarioActual", u);
         return ResponseEntity.ok(Map.of(
-            "mensaje", "Login exitoso vÃ­a PUT",
-            "usuario", u
+                "mensaje", "Inicio de sesiÃ³n exitoso",
+                "idUsuario", u.getIdUsuario(),
+                "nombre", u.getNombre(),
+                "rol", u.getRol(),
+                "estado", u.getEstado(),
+                "usuario", u
         ));
     }
 
-        @GetMapping("/logout")
-    public String logout(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+    @GetMapping("/logout")
+    public String logout(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response, jakarta.servlet.http.HttpSession session) {
+        if (session != null) {
+            session.invalidate();
+        }
         org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler logoutHandler = 
             new org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler();
         logoutHandler.logout(request, response, org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
         return "redirect:/login?logout=true";
     }
 
-    // 7.2. Registro
+    // 7.2. Registro de Usuarios
     @GetMapping("/registro")
     public String registro() {
         return "registro";
@@ -117,55 +137,52 @@ public class ViewController {
                                    @RequestParam(name = "correo", required = false) String correo,
                                    @RequestParam(name = "passwordHash", required = false) String passwordHash,
                                    @RequestParam(name = "confirmPassword", required = false) String confirmPassword,
+                                   RedirectAttributes redirectAttributes,
                                    Model model) {
-        if (nombre == null || nombre.trim().isEmpty() ||
-            apellidos == null || apellidos.trim().isEmpty() ||
-            dni == null || dni.trim().isEmpty() ||
-            telefono == null || telefono.trim().isEmpty() ||
-            correo == null || correo.trim().isEmpty() ||
-            passwordHash == null || passwordHash.trim().isEmpty()) {
-            model.addAttribute("error", "Todos los campos con asterisco (*) son obligatorios.");
-            return "registro";
-        }
-
-        String nom = nombre.trim();
-        String ape = apellidos.trim();
-        String dniLimpio = dni.trim().replaceAll("\\s+", "");
-        String telLimpio = telefono.trim().replaceAll("[^0-9]", "");
-        String correoLimpio = correo.trim().toLowerCase();
-        String pass = passwordHash.trim();
-        String confPass = confirmPassword != null ? confirmPassword.trim() : "";
-
-        if (!nom.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]{3,75}$")) {
-            model.addAttribute("error", "El nombre debe tener entre 3 y 75 letras y espacios (sin números ni símbolos especiales).");
-            return "registro";
-        }
-        if (!ape.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]{3,75}$")) {
-            model.addAttribute("error", "Los apellidos deben tener entre 3 y 75 letras y espacios (sin números ni símbolos especiales).");
-            return "registro";
-        }
-        if (!dniLimpio.matches("^[0-9]{8}$")) {
-            model.addAttribute("error", "El DNI debe tener exactamente 8 dígitos numéricos.");
-            return "registro";
-        }
-        if (!telLimpio.matches("^[0-9]{9}$")) {
-            model.addAttribute("error", "El celular debe contener exactamente 9 dígitos numéricos.");
-            return "registro";
-        }
-        if (!correoLimpio.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
-            model.addAttribute("error", "El formato del correo electrónico ingresado no es válido.");
-            return "registro";
-        }
-        if (pass.length() < 6) {
-            model.addAttribute("error", "La contraseña debe tener un mínimo de 6 caracteres.");
-            return "registro";
-        }
-        if (!pass.equals(confPass)) {
-            model.addAttribute("error", "Las contraseñas no coinciden. Por favor verifícalas.");
-            return "registro";
-        }
-
         try {
+            String nom = (nombre != null) ? nombre.trim() : "";
+            String ape = (apellidos != null) ? apellidos.trim() : "";
+            if (nom.isEmpty()) {
+                throw new IllegalArgumentException("El nombre es obligatorio.");
+            }
+            if (ape.isEmpty()) {
+                throw new IllegalArgumentException("Los apellidos son obligatorios.");
+            }
+            String regexLetras = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$";
+            if (!nom.matches(regexLetras)) {
+                throw new IllegalArgumentException("El nombre solo debe contener letras (sin números ni caracteres especiales).");
+            }
+            if (!ape.matches(regexLetras)) {
+                throw new IllegalArgumentException("Los apellidos solo deben contener letras (sin números ni caracteres especiales).");
+            }
+
+            String dniLimpio = (dni != null) ? dni.trim().replaceAll("\\s+", "") : "";
+            if (!dniLimpio.matches("^[0-9]{8}$")) {
+                throw new IllegalArgumentException("El DNI debe tener exactamente 8 dígitos numéricos.");
+            }
+
+            String telLimpio = (telefono != null) ? telefono.trim().replaceAll("[^0-9]", "") : "";
+            if (telLimpio.length() == 11 && telLimpio.startsWith("51")) {
+                telLimpio = telLimpio.substring(2);
+            }
+            if (!telLimpio.matches("^[0-9]{9}$")) {
+                throw new IllegalArgumentException("El celular debe tener exactamente 9 dígitos numéricos.");
+            }
+
+            String correoLimpio = (correo != null) ? correo.trim().toLowerCase() : "";
+            if (!correoLimpio.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                throw new IllegalArgumentException("El formato del correo electrónico es inválido.");
+            }
+
+            String pass = (passwordHash != null) ? passwordHash.trim() : "";
+            String passConf = (confirmPassword != null) ? confirmPassword.trim() : "";
+            if (pass.length() < 6) {
+                throw new IllegalArgumentException("La contraseña debe tener un mínimo de 6 caracteres.");
+            }
+            if (!pass.equals(passConf)) {
+                throw new IllegalArgumentException("Las contraseñas ingresadas no coinciden.");
+            }
+
             Usuario usuario = new Usuario();
             usuario.setNombre(nom + " " + ape);
             usuario.setDni(dniLimpio);
@@ -173,77 +190,137 @@ public class ViewController {
             usuario.setCorreo(correoLimpio);
             usuario.setPasswordHash(pass);
             usuario.setRol("LECTOR");
-            usuario.setEstado(true); // 1 = activo (booleano)
+            usuario.setEstado(true);
+            usuario.setDireccion("Arequipa, Perú");
+            usuario.setFechaCreacion(LocalDateTime.now());
 
             usuarioService.registrarUsuario(usuario);
-            model.addAttribute("mensajeExito", "¡Registro exitoso! Ya puedes iniciar sesión con tu cuenta de lector.");
-            return "login";
+            redirectAttributes.addFlashAttribute("mensajeExito", "¡Tu cuenta ha sido creada con éxito! Ya puedes iniciar sesión con tu correo y contraseña.");
+            return "redirect:/login";
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
             return "registro";
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            model.addAttribute("error", "Ya existe una cuenta registrada con este correo electrónico o DNI.");
-            return "registro";
         } catch (Exception e) {
-            model.addAttribute("error", "No se pudo registrar: " + e.getMessage());
+            model.addAttribute("error", "Error al procesar el registro: " + e.getMessage());
             return "registro";
         }
     }
 
-    // 7.3. Catálogo de Libros (Lector)
+    // 7.3. Catálogo General de Libros
     @GetMapping("/catalogo")
-    public String catalogo(@RequestParam(name = "query", required = false) String query, Model model) {
+    public String catalogo(@RequestParam(name = "query", required = false) String query,
+                           @RequestParam(name = "categoriaId", required = false) Integer categoriaId,
+                           @RequestParam(name = "disponibilidad", required = false) String disponibilidad,
+                           jakarta.servlet.http.HttpSession session,
+                           Model model) {
+        List<Libro> todosLosLibros = libroService.listarTodos();
         List<Libro> libros;
+
         if (query != null && !query.trim().isEmpty()) {
             libros = libroService.buscarPorFiltros(query.trim());
+            // Guardar auditoría en tbl_historial_busqueda
+            try {
+                Usuario u = (Usuario) session.getAttribute("usuarioActual");
+                HistorialBusqueda hb = new HistorialBusqueda();
+                hb.setTermino(query.trim());
+                hb.setUsuario(u);
+                hb.setFechaHora(LocalDateTime.now());
+                historialBusquedaRepository.save(hb);
+            } catch (Exception ignored) {}
         } else {
-            libros = libroService.listarTodos();
+            libros = new ArrayList<>(todosLosLibros);
+        }
+
+        if (categoriaId != null && categoriaId > 0) {
+            libros = libros.stream()
+                    .filter(l -> (l.getCategoria() != null && l.getCategoria().getIdCategoria().equals(categoriaId)) ||
+                                 (l.getCategorias() != null && l.getCategorias().stream().anyMatch(c -> c.getIdCategoria().equals(categoriaId))))
+                    .toList();
+        }
+
+        if ("disponibles".equalsIgnoreCase(disponibilidad)) {
+            libros = libros.stream()
+                    .filter(l -> l.getStockDisponible() != null && l.getStockDisponible() > 0)
+                    .toList();
+        } else if ("agotados".equalsIgnoreCase(disponibilidad)) {
+            libros = libros.stream()
+                    .filter(l -> l.getStockDisponible() == null || l.getStockDisponible() <= 0)
+                    .toList();
         }
 
         model.addAttribute("libros", libros);
-        model.addAttribute("query", query != null ? query : "");
         model.addAttribute("categorias", categoriaService.listarCategorias());
+        model.addAttribute("query", query);
+        model.addAttribute("categoriaSeleccionada", categoriaId);
+        model.addAttribute("disponibilidad", disponibilidad != null ? disponibilidad : "todos");
+
         return "catalogo";
     }
 
-    // PUT Catálogo Lector: Permite editar el JSON en Postman
-    @PutMapping(value = {"/catalogo", "/catalogo/{id}"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<?> editarCatalogoJson(@PathVariable(required = false) Integer id, @RequestBody Libro libro) {
-        Integer libroId = (id != null) ? id : libro.getIdLibro();
-        if (libroId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Debe proporcionar el idLibro en la URL o en el cuerpo JSON"));
-        }
-        try {
-            Libro actualizado = libroService.actualizarLibro(libroId, libro);
-            return ResponseEntity.ok(actualizado);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    // 7.4. Información del Libro
+    // 7.4. Ficha Técnica y Detalle del Libro
     @GetMapping("/libro/{id}")
     public String detalleLibro(@PathVariable Integer id, Model model) {
-        Libro libro = libroService.obtenerPorId(id).orElse(null);
-        if (libro == null) {
-            return "redirect:/catalogo";
-        }
-        model.addAttribute("libro", libro);
-        return "libro-detalle";
+        return libroService.obtenerPorId(id)
+                .map(libro -> {
+                    model.addAttribute("libro", libro);
+                    return "libro-detalle";
+                })
+                .orElse("redirect:/catalogo");
     }
 
-    // 7.5. Préstamos y Multas del Lector
+    // Descarga Real del PDF del Libro
+    @GetMapping("/libros/descargar/{idLibro}")
+    @ResponseBody
+    public ResponseEntity<byte[]> descargarExtractoLibro(@PathVariable Integer idLibro) {
+        Libro libro = libroService.obtenerPorId(idLibro).orElse(null);
+        if (libro == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            List<ContenidoDigital> contenidos = contenidoDigitalRepository.findByLibroIdLibro(idLibro);
+            if (!contenidos.isEmpty()) {
+                String rutaRelativa = contenidos.get(0).getUrlArchivo();
+                if (rutaRelativa != null && rutaRelativa.startsWith("/")) {
+                    rutaRelativa = rutaRelativa.substring(1);
+                }
+                Path path = Paths.get(rutaRelativa);
+                if (Files.exists(path)) {
+                    byte[] bytes = Files.readAllBytes(path);
+                    String filename = libro.getTitulo().replaceAll("[^a-zA-Z0-9.-]", "_") + ".pdf";
+                    return ResponseEntity.ok()
+                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                            .contentType(MediaType.APPLICATION_PDF)
+                            .body(bytes);
+                }
+            }
+
+            // Generador de Extracto en memoria
+            byte[] pdfGenerado = PdfGenerator.generarExtractoPdf(libro);
+            String filename = "Extracto_" + libro.getTitulo().replaceAll("[^a-zA-Z0-9.-]", "_") + ".pdf";
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfGenerado);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 7.5. Mis Préstamos y Multas (Lector)
     @GetMapping("/prestamos")
     public String misPrestamos(jakarta.servlet.http.HttpSession session, Model model) {
         Usuario usuarioActual = (Usuario) session.getAttribute("usuarioActual");
         List<Prestamo> prestamosActivos = new ArrayList<>();
         List<Devolucion> devoluciones = new ArrayList<>();
+        List<Reserva> reservas = new ArrayList<>();
         BigDecimal totalMulta = BigDecimal.ZERO;
 
         if (usuarioActual != null && usuarioActual.getIdUsuario() != null) {
             prestamosActivos = prestamoService.listarActivosPorUsuario(usuarioActual.getIdUsuario());
             devoluciones = devolucionService.listarPorUsuario(usuarioActual.getIdUsuario());
+            reservas = reservaService.listarPorUsuario(usuarioActual.getIdUsuario());
 
             for (Devolucion d : devoluciones) {
                 if (d.getMontoMulta() != null) {
@@ -251,10 +328,10 @@ public class ViewController {
                 }
             }
 
-            java.time.LocalDate hoy = java.time.LocalDate.now();
+            LocalDate hoy = LocalDate.now();
             for (Prestamo p : prestamosActivos) {
                 if (p.getFechaVencimiento() != null && p.getFechaVencimiento().isBefore(hoy)) {
-                    long dias = java.time.temporal.ChronoUnit.DAYS.between(p.getFechaVencimiento(), hoy);
+                    long dias = ChronoUnit.DAYS.between(p.getFechaVencimiento(), hoy);
                     totalMulta = totalMulta.add(BigDecimal.valueOf(dias).multiply(new BigDecimal("2.50")));
                 }
             }
@@ -262,6 +339,7 @@ public class ViewController {
         model.addAttribute("prestamos", prestamosActivos);
         model.addAttribute("prestamosActivos", prestamosActivos);
         model.addAttribute("devoluciones", devoluciones);
+        model.addAttribute("reservas", reservas);
         model.addAttribute("totalMulta", totalMulta);
         return "prestamos";
     }
@@ -276,20 +354,61 @@ public class ViewController {
             return "redirect:/login";
         }
         try {
-            com.utp.biblioteca.dto.PrestamoRequestDTO solicitud = new com.utp.biblioteca.dto.PrestamoRequestDTO();
+            PrestamoRequestDTO solicitud = new PrestamoRequestDTO();
             solicitud.setIdLibro(idLibro);
             solicitud.setIdUsuario(usuarioActual.getIdUsuario());
             solicitud.setDiasPrestamo(7);
-
             prestamoService.registrarPrestamo(solicitud);
-            redirectAttributes.addFlashAttribute("mensajeExito", "¡Préstamo registrado exitosamente! Recuerda devolverlo en la fecha límite.");
+            redirectAttributes.addFlashAttribute("mensajeExito", "¡Préstamo solicitado con éxito! El ejemplar ha sido reservado para ti por 24 horas para su retiro en mostrador.");
+            return "redirect:/prestamos";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "No se pudo realizar el préstamo: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/libro/" + idLibro;
+        }
+    }
+
+    // Solicitud Real de Reserva (Cola de Espera)
+    @PostMapping("/reservas/solicitar/{idLibro}")
+    public String solicitarReserva(@PathVariable Integer idLibro,
+                                   jakarta.servlet.http.HttpSession session,
+                                   RedirectAttributes redirectAttributes) {
+        Usuario usuarioActual = (Usuario) session.getAttribute("usuarioActual");
+        if (usuarioActual == null) {
+            redirectAttributes.addFlashAttribute("error", "Debes iniciar sesión para solicitar una reserva.");
+            return "redirect:/login";
+        }
+        try {
+            ReservaRequestDTO dto = new ReservaRequestDTO();
+            dto.setIdLibro(idLibro);
+            dto.setIdUsuario(usuarioActual.getIdUsuario());
+            reservaService.crearReserva(dto);
+            redirectAttributes.addFlashAttribute("mensajeExito", "¡Reserva registrada con éxito! Has ingresado a la cola de espera de este ejemplar. Te notificaremos cuando esté disponible.");
+            return "redirect:/prestamos";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/libro/" + idLibro;
+        }
+    }
+
+    // Cancelar Reserva de Lector
+    @PostMapping("/reservas/cancelar/{idReserva}")
+    public String cancelarReservaUsuario(@PathVariable Integer idReserva,
+                                         jakarta.servlet.http.HttpSession session,
+                                         RedirectAttributes redirectAttributes) {
+        Usuario usuarioActual = (Usuario) session.getAttribute("usuarioActual");
+        if (usuarioActual == null) {
+            return "redirect:/login";
+        }
+        try {
+            reservaService.cancelarReserva(idReserva);
+            redirectAttributes.addFlashAttribute("mensajeExito", "La reserva ha sido cancelada correctamente.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al cancelar la reserva: " + e.getMessage());
         }
         return "redirect:/prestamos";
     }
 
-    // 7.6. Panel Admin: Préstamos
+    // 7.6. Panel Admin: Préstamos & WhatsApp
     @GetMapping("/admin/prestamos")
     public String adminPrestamos(jakarta.servlet.http.HttpSession session, Model model) {
         if (!esAdminOAutorizado(session)) {
@@ -298,47 +417,6 @@ public class ViewController {
         List<Prestamo> prestamos = prestamoService.listarPrestamosActivos();
         model.addAttribute("prestamos", prestamos);
         return "admin-prestamos";
-    }
-
-    // PUT Préstamos Admin: Permite editar el JSON en Postman
-    @PutMapping(value = {"/admin/prestamos", "/admin/prestamos/{id}"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public ResponseEntity<?> editarAdminPrestamosJson(@PathVariable(required = false) Integer id, @RequestBody Map<String, Object> body) {
-        Integer prestamoId = id;
-        if (prestamoId == null && body.get("idPrestamo") != null) {
-            prestamoId = Integer.valueOf(body.get("idPrestamo").toString());
-        }
-        if (prestamoId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Debe proporcionar el idPrestamo en la URL o en el cuerpo JSON"));
-        }
-
-        var prestamoOpt = prestamoService.obtenerPorId(prestamoId);
-        if (prestamoOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Préstamo no encontrado con ID: " + prestamoId));
-        }
-        Prestamo prestamo = prestamoOpt.get();
-
-        if (body.containsKey("estado")) {
-            String nuevoEstado = body.get("estado").toString();
-            if ("DEVUELTO".equalsIgnoreCase(nuevoEstado)) {
-                DevolucionRequestDTO devDto = new DevolucionRequestDTO();
-                devDto.setIdPrestamo(prestamoId);
-                devDto.setEstadoEjemplar(body.getOrDefault("estadoEjemplar", "BUENO").toString());
-                devDto.setObservacion(body.getOrDefault("observacion", "Devolución actualizada vía PUT JSON").toString());
-                try {
-                    Devolucion dev = devolucionService.procesarDevolucion(devDto);
-                    return ResponseEntity.ok(Map.of("mensaje", "Préstamo marcado como DEVUELTO con éxito", "devolucion", dev));
-                } catch (Exception e) {
-                    return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-                }
-            } else {
-                prestamo.setEstado(nuevoEstado);
-            }
-        }
-        if (body.containsKey("fechaVencimiento")) {
-            prestamo.setFechaVencimiento(java.time.LocalDate.parse(body.get("fechaVencimiento").toString()));
-        }
-        return ResponseEntity.ok(Map.of("mensaje", "Préstamo actualizado exitosamente vía PUT", "prestamo", prestamo));
     }
 
     @GetMapping("/admin/prestamos/devolver")
@@ -360,28 +438,36 @@ public class ViewController {
             DevolucionRequestDTO solicitud = new DevolucionRequestDTO();
             solicitud.setIdPrestamo(idPrestamo);
             solicitud.setEstadoEjemplar(estadoEjemplar != null && !estadoEjemplar.isBlank() ? estadoEjemplar : "BUENO");
-            solicitud.setObservacion(observacion != null && !observacion.isBlank() ? observacion.trim() : "Devolucion fisica en mostrador");
+            solicitud.setObservacion(observacion != null && !observacion.isBlank() ? observacion.trim() : "Devolución física en mostrador");
 
             Devolucion dev = devolucionService.procesarDevolucion(solicitud);
 
-            String mensaje = "Devolucion confirmada: El prestamo PR-" + idPrestamo + " ha sido marcado como DEVUELTO y el ejemplar fue reingresado al catalogo.";
+            String mensaje = "Devolución del libro procesada correctamente.";
             if (dev.getMontoMulta() != null && dev.getMontoMulta().compareTo(BigDecimal.ZERO) > 0) {
-                mensaje += " Se registro una multa de S/. " + dev.getMontoMulta() + " por " + dev.getDiasRetraso() + " dias de mora.";
+                mensaje += " Se registró una multa de S/. " + dev.getMontoMulta() + " por " + dev.getDiasRetraso() + " días de retraso.";
+            } else {
+                mensaje += " Ejemplar reintegrado al catálogo físico.";
             }
+
             redirectAttributes.addFlashAttribute("mensajeExito", mensaje);
+            redirectAttributes.addFlashAttribute("idDevolucionGenerada", dev.getIdDevolucion());
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al procesar la devolucion: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al procesar la devolución: " + e.getMessage());
         }
+
         return "redirect:/admin/prestamos";
     }
 
     // 7.7. Panel Admin: Catalogación y Gestión de Libros
     @GetMapping("/admin/catalogacion")
-    public String adminCatalogacion(@RequestParam(name = "tab", required = false, defaultValue = "formulario") String tab, 
-                                    @RequestParam(name = "exito", required = false) Boolean exito,
-                                    @RequestParam(name = "error", required = false) String error,
-                                    jakarta.servlet.http.HttpSession session, 
-                                    Model model) {
+    public String adminCatalogacion(
+            @RequestParam(name = "tab", required = false, defaultValue = "formulario") String tab,
+            @RequestParam(name = "exito", required = false) Boolean exito,
+            @RequestParam(name = "eliminado", required = false) Boolean eliminado,
+            @RequestParam(name = "error", required = false) String error,
+            jakarta.servlet.http.HttpSession session,
+            Model model) {
         if (!esAdminOAutorizado(session)) {
             return "redirect:/login";
         }
@@ -390,6 +476,7 @@ public class ViewController {
         model.addAttribute("tabActiva", tab);
         model.addAttribute("nuevoLibro", new Libro());
         model.addAttribute("exito", exito != null && exito);
+        model.addAttribute("eliminado", eliminado != null && eliminado);
         model.addAttribute("error", error);
         return "admin-catalogacion";
     }
@@ -399,6 +486,7 @@ public class ViewController {
             @ModelAttribute Libro libro,
             @RequestParam(name = "categoriaId", required = false) Integer categoriaId,
             @RequestParam(name = "autorNombre", required = false) String autorNombre,
+            @RequestParam(name = "archivoPdf", required = false) MultipartFile archivoPdf,
             jakarta.servlet.http.HttpSession session,
             RedirectAttributes redirectAttributes) {
         if (!esAdminOAutorizado(session)) {
@@ -420,15 +508,12 @@ public class ViewController {
             if (libro.getStockDisponible() == null) {
                 libro.setStockDisponible(libro.getStockTotal());
             }
-            if (libro.getIdioma() == null || libro.getIdioma().isBlank()) {
-                libro.setIdioma("Español");
-            }
-            if (libro.getPortadaUrl() != null) {
-                libro.setPortadaUrl(libro.getPortadaUrl().trim());
-            }
 
             if (categoriaId != null && categoriaId > 0) {
-                categoriaService.obtenerPorId(categoriaId).ifPresent(libro::setCategoria);
+                categoriaService.obtenerPorId(categoriaId).ifPresent(cat -> {
+                    libro.setCategoria(cat);
+                    libro.setCategorias(new ArrayList<>(List.of(cat)));
+                });
             }
 
             if (autorNombre != null && !autorNombre.trim().isEmpty()) {
@@ -446,12 +531,39 @@ public class ViewController {
                 libro.setAutores(new ArrayList<>(List.of(autorGuardado)));
             }
 
-            libroService.registrarLibro(libro);
-            redirectAttributes.addAttribute("tab", "formulario");
+            Libro libroGuardado = libroService.registrarLibro(libro);
+
+            // Manejo de carga de PDF
+            if (archivoPdf != null && !archivoPdf.isEmpty()) {
+                try {
+                    File dir = new File("uploads/pdfs");
+                    if (!dir.exists()) {
+                        dir.mkdirs();
+                    }
+                    String nombreArchivo = System.currentTimeMillis() + "_" + archivoPdf.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_");
+                    File destino = new File(dir, nombreArchivo);
+                    try (FileOutputStream fos = new FileOutputStream(destino);
+                         InputStream is = archivoPdf.getInputStream()) {
+                        is.transferTo(fos);
+                    }
+
+                    ContenidoDigital cd = new ContenidoDigital();
+                    cd.setLibro(libroGuardado);
+                    cd.setUrlArchivo("/uploads/pdfs/" + nombreArchivo);
+                    cd.setTipoArchivo("application/pdf");
+                    cd.setChecksum(Long.toHexString(destino.length()));
+                    cd.setFechaIndexacion(LocalDateTime.now());
+                    contenidoDigitalRepository.save(cd);
+                } catch (Exception ex) {
+                    System.err.println("Error al guardar archivo digital: " + ex.getMessage());
+                }
+            }
+
             redirectAttributes.addAttribute("exito", true);
+            redirectAttributes.addAttribute("tab", "inventario");
         } catch (Exception e) {
+            redirectAttributes.addAttribute("error", "Error al registrar el libro: " + e.getMessage());
             redirectAttributes.addAttribute("tab", "formulario");
-            redirectAttributes.addAttribute("error", "Error al guardar el libro: " + e.getMessage());
         }
         return "redirect:/admin/catalogacion";
     }
@@ -465,27 +577,82 @@ public class ViewController {
         }
         try {
             boolean eliminado = libroService.eliminarLibro(id);
-            redirectAttributes.addAttribute("tab", "bajas");
             if (eliminado) {
-                redirectAttributes.addAttribute("exito", true);
+                redirectAttributes.addAttribute("eliminado", true);
+                redirectAttributes.addAttribute("tab", "inventario");
             } else {
-                redirectAttributes.addAttribute("error", "No se encontró el libro solicitado.");
+                redirectAttributes.addAttribute("error", "No se encontró el libro solicitado para eliminar.");
+                redirectAttributes.addAttribute("tab", "inventario");
             }
         } catch (Exception e) {
-            redirectAttributes.addAttribute("tab", "bajas");
-            redirectAttributes.addAttribute("error", "No se puede dar de baja el libro porque tiene préstamos activos asociados.");
+            redirectAttributes.addAttribute("error", "No se puede dar de baja el libro porque posee registros históricos o activos asociados.");
+            redirectAttributes.addAttribute("tab", "inventario");
         }
         return "redirect:/admin/catalogacion";
     }
 
-    // 7.8. Panel Admin: Telemetría
+    // 7.8. Telemetría Actuator y Métricas Reales del Sistema
     @GetMapping("/admin/telemetria")
     public String adminTelemetria(jakarta.servlet.http.HttpSession session, Model model) {
         if (!esAdminOAutorizado(session)) {
             return "redirect:/login";
         }
-        model.addAttribute("totalLibros", libroService.listarTodos().size());
-        model.addAttribute("totalPrestamos", prestamoService.listarPrestamosActivos().size());
+
+        List<Libro> todosLibros = libroService.listarTodos();
+        List<Prestamo> prestamosActivos = prestamoService.listarPrestamosActivos();
+        List<Devolucion> todasDevoluciones = devolucionService.listarTodas();
+        List<Reserva> todasReservas = reservaService.listarTodas();
+
+        long totalEjemplares = todosLibros.stream().mapToLong(l -> l.getStockTotal() != null ? l.getStockTotal() : 0).sum();
+        long stockDisponible = todosLibros.stream().mapToLong(l -> l.getStockDisponible() != null ? l.getStockDisponible() : 0).sum();
+
+        BigDecimal totalMultasRecaudadas = todasDevoluciones.stream()
+                .map(d -> d.getMontoMulta() != null ? d.getMontoMulta() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        LocalDate hoy = LocalDate.now();
+        long prestamosVencidos = prestamosActivos.stream()
+                .filter(p -> p.getFechaVencimiento() != null && p.getFechaVencimiento().isBefore(hoy))
+                .count();
+
+        long uptimeMs = ManagementFactory.getRuntimeMXBean().getUptime();
+        long horas = uptimeMs / (1000 * 60 * 60);
+        long minutos = (uptimeMs % (1000 * 60 * 60)) / (1000 * 60);
+        String uptimeStr = horas + "h " + minutos + "m";
+        String jvmVersion = System.getProperty("java.version");
+
+        long memUsadaMb = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+        long memTotalMb = Runtime.getRuntime().totalMemory() / (1024 * 1024);
+
+        // Libros más prestados reales
+        Map<String, Long> conteo = prestamoRepository.findAll().stream()
+                .filter(p -> p.getLibro() != null)
+                .collect(Collectors.groupingBy(p -> p.getLibro().getTitulo(), Collectors.counting()));
+
+        List<Map<String, Object>> rankingLibros = conteo.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(5)
+                .map(e -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("titulo", e.getKey());
+                    item.put("prestamos", e.getValue());
+                    return item;
+                })
+                .collect(Collectors.toList());
+
+        model.addAttribute("totalLibros", todosLibros.size());
+        model.addAttribute("totalEjemplares", totalEjemplares);
+        model.addAttribute("stockDisponible", stockDisponible);
+        model.addAttribute("totalPrestamos", prestamosActivos.size());
+        model.addAttribute("prestamosVencidos", prestamosVencidos);
+        model.addAttribute("totalDevoluciones", todasDevoluciones.size());
+        model.addAttribute("totalMultasRecaudadas", totalMultasRecaudadas);
+        model.addAttribute("totalReservas", todasReservas.size());
+        model.addAttribute("uptime", uptimeStr);
+        model.addAttribute("jvmVersion", jvmVersion);
+        model.addAttribute("memoria", memUsadaMb + " MB / " + memTotalMb + " MB");
+        model.addAttribute("rankingLibros", rankingLibros);
+
         return "admin-telemetria";
     }
 
@@ -515,8 +682,8 @@ public class ViewController {
 
         if (categoriaId != null && categoriaId > 0) {
             libros = libros.stream()
-                    .filter(l -> (l.getCategoria() != null && l.getCategoria().getIdCategoria().equals(categoriaId))
-                            || (l.getCategorias() != null && l.getCategorias().stream().anyMatch(c -> c.getIdCategoria().equals(categoriaId))))
+                    .filter(l -> (l.getCategoria() != null && l.getCategoria().getIdCategoria().equals(categoriaId)) ||
+                                 (l.getCategorias() != null && l.getCategorias().stream().anyMatch(c -> c.getIdCategoria().equals(categoriaId))))
                     .toList();
         }
 
@@ -537,10 +704,9 @@ public class ViewController {
 
         model.addAttribute("libros", libros);
         model.addAttribute("categorias", categoriaService.listarCategorias());
-        model.addAttribute("autores", autorService.listarAutores());
-        model.addAttribute("query", query != null ? query : "");
+        model.addAttribute("query", query);
         model.addAttribute("categoriaSeleccionada", categoriaId);
-        model.addAttribute("disponibilidadSeleccionada", disponibilidad != null ? disponibilidad : "todos");
+        model.addAttribute("disponibilidad", disponibilidad != null ? disponibilidad : "todos");
         model.addAttribute("totalLibros", totalLibros);
         model.addAttribute("totalEjemplares", totalEjemplares);
         model.addAttribute("disponibles", disponibles);

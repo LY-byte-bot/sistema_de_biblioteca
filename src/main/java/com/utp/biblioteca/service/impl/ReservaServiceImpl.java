@@ -33,6 +33,10 @@ public class ReservaServiceImpl implements ReservaService {
         Libro libro = libroRepository.findById(solicitud.getIdLibro())
                 .orElseThrow(() -> new IllegalArgumentException("Libro no encontrado con ID: " + solicitud.getIdLibro()));
 
+        if (reservaRepository.existsByUsuarioIdUsuarioAndLibroIdLibroAndEstado(solicitud.getIdUsuario(), solicitud.getIdLibro(), "PENDIENTE")) {
+            throw new IllegalStateException("Ya cuentas con una reserva en cola pendiente para este título.");
+        }
+
         Reserva reserva = new Reserva();
         reserva.setUsuario(usuario);
         reserva.setLibro(libro);
@@ -55,7 +59,7 @@ public class ReservaServiceImpl implements ReservaService {
     @Override
     @Transactional(readOnly = true)
     public List<Reserva> listarPorUsuario(Integer idUsuario) {
-        return reservaRepository.findByUsuarioIdUsuario(idUsuario);
+        return reservaRepository.findByUsuarioIdUsuarioOrderByFechaSolicitudDesc(idUsuario);
     }
 
     @Override
@@ -70,4 +74,3 @@ public class ReservaServiceImpl implements ReservaService {
         return reservaRepository.findById(id);
     }
 }
-

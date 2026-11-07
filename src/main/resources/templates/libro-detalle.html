@@ -3,13 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Información del Libro - Biblioteca Académica del Sur</title>
+    <title th:text="${libro.titulo} + ' - Biblioteca Académica del Sur'">Información del Libro - Biblioteca Académica del Sur</title>
+    <meta property="og:title" th:content="${libro.titulo} + ' - Biblioteca Académica del Sur'">
+    <meta property="og:description" th:content="${libro.resumen ?: 'Información bibliográfica y consulta de ejemplar físico.'}">
+    <meta property="og:image" th:if="${libro.portadaUrl != null}" th:content="${libro.portadaUrl}">
+    <meta name="description" content="Sistema Integrado de Gestión Bibliográfica, Préstamos Físicos y Catálogo Digital - Biblioteca Académica del Sur.">
+    <meta name="keywords" content="biblioteca, libros, prestamos, catalogo digital, arequipa, software, educacion">
+    <meta property="og:site_name" content="Biblioteca Académica del Sur">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='2' y='4' width='4' height='16' rx='1' fill='%23ef4444'/><rect x='8' y='2' width='4' height='18' rx='1' fill='%23eab308'/><rect x='14' y='6' width='4' height='14' rx='1' fill='%2322c55e'/><rect x='20' y='3' width='3' height='17' rx='1' fill='%2306b6d4'/></svg>">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
-<body class="bg-light">
+<body class="bg-light min-vh-100 d-flex flex-column">
 
     <!-- BARRA DE NAVEGACIÓN INSTITUCIONAL -->
     <header class="navbar-wire sticky-top">
@@ -36,7 +44,7 @@
                 <span class="small text-muted" th:unless="${session.usuarioActual != null}">
                     <i class="bi bi-person me-1"></i> Lector Invitado
                 </span>
-                <a th:if="${session.usuarioActual != null and (session.usuarioActual.rol == 'ADMINISTRADOR' or session.usuarioActual.rol == 'BIBLIOTECARIO')}" 
+                <a th:if="${session.usuarioActual != null and (session.usuarioActual.rol == 'ADMIN' or session.usuarioActual.rol == 'ADMINISTRADOR' or session.usuarioActual.rol == 'BIBLIOTECARIO')}" 
                    th:href="@{/admin/catalogo}" class="btn btn-sm btn-outline-primary py-1 px-2">
                     <i class="bi bi-shield-lock-fill me-1"></i> Panel Admin
                 </a>
@@ -50,8 +58,15 @@
     <main class="container py-4">
         <div class="wire-card p-4 p-md-5">
 
-            <!-- Botón Volver al Catálogo -->
-            <div class="mb-3">
+            <!-- Migas de Pan (Breadcrumbs) y Volver al Catálogo -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 small">
+                        <li class="breadcrumb-item"><a th:href="@{/catalogo}" class="text-decoration-none">Inicio</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/catalogo}" class="text-decoration-none">Catálogo</a></li>
+                        <li class="breadcrumb-item active text-truncate" style="max-width: 320px;" aria-current="page" th:text="${libro.titulo}">Título del Libro</li>
+                    </ol>
+                </nav>
                 <a th:href="@{/catalogo}" class="btn btn-sm btn-wire-outline">
                     &larr; Volver al Catálogo
                 </a>
@@ -140,6 +155,9 @@
                     </div>
 
                     <!-- Alertas de Error si ocurren -->
+                    <div th:if="${mensajeExito}" class="alert alert-success py-2 small mb-3">
+                        <i class="bi bi-check-circle-fill me-1"></i> <span th:text="${mensajeExito}"></span>
+                    </div>
                     <div th:if="${error}" class="alert alert-danger py-2 small mb-3">
                         <i class="bi bi-exclamation-triangle-fill me-1"></i> <span th:text="${error}"></span>
                     </div>
@@ -151,13 +169,15 @@
                                 📖 Solicitar Préstamo de Ejemplar Físico
                             </button>
                         </form>
-                        <button th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" onclick="alert('📌 ¡Reserva Registrada en Cola!\n\nHas ingresado a la lista de espera para este título. Te notificaremos cuando haya ejemplares libres.');" class="btn btn-wire-yellow py-2 px-4">
-                            📌 Reservar Ejemplar en Cola de Espera
-                        </button>
+                        <form th:unless="${libro.stockDisponible != null and libro.stockDisponible > 0}" th:action="@{'/reservas/solicitar/' + ${libro.idLibro}}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-wire-yellow py-2 px-4 fw-bold">
+                                📌 Reservar Ejemplar en Cola de Espera
+                            </button>
+                        </form>
 
-                        <button onclick="alert('Iniciando descarga segura del extracto de muestra en PDF (Primeros 2 capítulos)...');" class="btn btn-wire-outline py-2 px-3">
+                        <a th:href="@{'/libros/descargar/' + ${libro.idLibro}}" class="btn btn-wire-outline py-2 px-3 text-decoration-none d-inline-flex align-items-center" target="_blank">
                             📄 Descargar Extracto de Muestra (PDF)
-                        </button>
+                        </a>
                     </div>
 
                     <!-- Nota sobre Recojo Presencial (Conservada tal cual como aviso) -->
@@ -175,6 +195,33 @@
 
         </div>
     </main>
+
+    
+    <!-- PIE DE PÁGINA INSTITUCIONAL -->
+    <footer class="footer-wire mt-auto py-4 border-top bg-white">
+        <div class="container">
+            <div class="row g-4 align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <div class="d-flex align-items-center justify-content-center justify-content-md-start gap-2 mb-2">
+                        <div class="brand-books">
+                            <span class="book-red"></span>
+                            <span class="book-yellow"></span>
+                            <span class="book-green"></span>
+                            <span class="book-blue"></span>
+                        </div>
+                        <span class="fw-bold text-dark fs-6">Biblioteca Académica del Sur</span>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        Pabellón de Biblioteca y Sala de Lectura &bull; Sede Central Arequipa &bull; Atención de Lunes a Sábado de 08:00 a 20:00 hrs.
+                    </p>
+                </div>
+                <div class="col-md-6 text-center text-md-end small text-muted">
+                    <div><i class="bi bi-shield-check text-success me-1"></i> Sistema Integrado de Circulación y Préstamos Bibliográficos</div>
+                    <div class="mt-1">&copy; 2026 Biblioteca Académica del Sur &bull; Todos los derechos reservados.</div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
