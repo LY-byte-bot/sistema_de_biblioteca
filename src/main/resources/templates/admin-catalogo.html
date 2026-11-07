@@ -455,7 +455,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 
-                        <form th:action="@{'/admin/catalogo/editar/' + ${libro.idLibro}}" method="post">
+                        <form th:action="@{'/admin/catalogo/editar/' + ${libro.idLibro}}" method="post" enctype="multipart/form-data">
                             <div class="modal-body p-4">
 
                                 <div class="notice-box-blue p-2 mb-3 small">
@@ -644,5 +644,17 @@
         </div>
     </footer>
 
+    <script>
+        function toggleEditPdf(idLibro, mostrar) {
+            const contenedor = document.getElementById('contenedorEditPdf_' + idLibro);
+            const input = document.getElementById('inputEditPdf_' + idLibro);
+            if (contenedor) {
+                contenedor.style.display = mostrar ? 'block' : 'none';
+                if (input && mostrar) {
+                    input.focus();
+                }
+            }
+        }
+    </script>
 </body>
 </html>

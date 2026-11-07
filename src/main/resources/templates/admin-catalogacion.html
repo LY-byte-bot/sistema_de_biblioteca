@@ -256,5 +256,17 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleArchivoPdf(mostrar) {
+            const contenedor = document.getElementById('contenedorArchivoPdf');
+            const input = document.getElementById('inputArchivoPdf');
+            if (contenedor) {
+                contenedor.style.display = mostrar ? 'block' : 'none';
+                if (input && mostrar) {
+                    input.focus();
+                }
+            }
+        }
+    </script>
 </body>
 </html>

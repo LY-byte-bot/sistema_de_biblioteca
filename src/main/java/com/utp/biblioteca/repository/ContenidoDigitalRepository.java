@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface ContenidoDigitalRepository extends JpaRepository<ContenidoDigital, Integer> {
     List<ContenidoDigital> findByLibroIdLibro(Integer idLibro);
+    void deleteByLibroIdLibro(Integer idLibro);
 }
-

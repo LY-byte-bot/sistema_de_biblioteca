@@ -50,6 +50,7 @@ public class ViewController {
     private final ContenidoDigitalRepository contenidoDigitalRepository;
     private final HistorialBusquedaRepository historialBusquedaRepository;
     private final PrestamoRepository prestamoRepository;
+    private final ArchivoStorageService archivoStorageService;
 
     // 7.1. Login y Verificación de Roles
     @GetMapping({"/", "/login"})
@@ -486,6 +487,7 @@ public class ViewController {
             @ModelAttribute Libro libro,
             @RequestParam(name = "categoriaId", required = false) Integer categoriaId,
             @RequestParam(name = "autorNombre", required = false) String autorNombre,
+            @RequestParam(name = "tipoExtracto", required = false, defaultValue = "DEFAULT") String tipoExtracto,
             @RequestParam(name = "archivoPdf", required = false) MultipartFile archivoPdf,
             jakarta.servlet.http.HttpSession session,
             RedirectAttributes redirectAttributes) {
@@ -533,25 +535,15 @@ public class ViewController {
 
             Libro libroGuardado = libroService.registrarLibro(libro);
 
-            // Manejo de carga de PDF
-            if (archivoPdf != null && !archivoPdf.isEmpty()) {
+            // Manejo de Extracto PDF: Personalizado vs AutomÃ¡tico por defecto
+            if ("PERSONALIZADO".equalsIgnoreCase(tipoExtracto) && archivoPdf != null && !archivoPdf.isEmpty()) {
                 try {
-                    File dir = new File("uploads/pdfs");
-                    if (!dir.exists()) {
-                        dir.mkdirs();
-                    }
-                    String nombreArchivo = System.currentTimeMillis() + "_" + archivoPdf.getOriginalFilename().replaceAll("[^a-zA-Z0-9.-]", "_");
-                    File destino = new File(dir, nombreArchivo);
-                    try (FileOutputStream fos = new FileOutputStream(destino);
-                         InputStream is = archivoPdf.getInputStream()) {
-                        is.transferTo(fos);
-                    }
-
+                    String rutaArchivo = archivoStorageService.guardarPdf(archivoPdf, "libro_" + libroGuardado.getIdLibro());
                     ContenidoDigital cd = new ContenidoDigital();
                     cd.setLibro(libroGuardado);
-                    cd.setUrlArchivo("/uploads/pdfs/" + nombreArchivo);
+                    cd.setUrlArchivo(rutaArchivo);
                     cd.setTipoArchivo("application/pdf");
-                    cd.setChecksum(Long.toHexString(destino.length()));
+                    cd.setChecksum(Long.toHexString(archivoPdf.getSize()));
                     cd.setFechaIndexacion(LocalDateTime.now());
                     contenidoDigitalRepository.save(cd);
                 } catch (Exception ex) {
@@ -741,6 +733,8 @@ public class ViewController {
             @RequestParam(name = "categoriaId", required = false) Integer categoriaId,
             @RequestParam(name = "autorId", required = false) Integer autorId,
             @RequestParam(name = "autorNombre", required = false) String autorNombre,
+            @RequestParam(name = "tipoExtracto", required = false, defaultValue = "CONSERVAR") String tipoExtracto,
+            @RequestParam(name = "archivoPdf", required = false) MultipartFile archivoPdf,
             jakarta.servlet.http.HttpSession session,
             RedirectAttributes redirectAttributes) {
         if (!esAdminOAutorizado(session)) {
@@ -779,6 +773,34 @@ public class ViewController {
             }
 
             libroService.actualizarLibro(id, libroForm);
+
+            // GestiÃ³n de extracto digital al editar
+            List<ContenidoDigital> contenidosActuales = contenidoDigitalRepository.findByLibroIdLibro(id);
+            if ("DEFAULT".equalsIgnoreCase(tipoExtracto)) {
+                // Volver a extracto por defecto: eliminar archivos fÃ­sicos y registro en BD
+                for (ContenidoDigital cd : contenidosActuales) {
+                    archivoStorageService.eliminarArchivo(cd.getUrlArchivo());
+                }
+                contenidoDigitalRepository.deleteAll(contenidosActuales);
+            } else if ("PERSONALIZADO".equalsIgnoreCase(tipoExtracto) && archivoPdf != null && !archivoPdf.isEmpty()) {
+                // Reemplazar con nuevo extracto PDF personalizado
+                for (ContenidoDigital cd : contenidosActuales) {
+                    archivoStorageService.eliminarArchivo(cd.getUrlArchivo());
+                }
+                contenidoDigitalRepository.deleteAll(contenidosActuales);
+
+                String rutaArchivo = archivoStorageService.guardarPdf(archivoPdf, "libro_" + id);
+                ContenidoDigital nuevoCd = new ContenidoDigital();
+                Libro lRef = new Libro();
+                lRef.setIdLibro(id);
+                nuevoCd.setLibro(lRef);
+                nuevoCd.setUrlArchivo(rutaArchivo);
+                nuevoCd.setTipoArchivo("application/pdf");
+                nuevoCd.setChecksum(Long.toHexString(archivoPdf.getSize()));
+                nuevoCd.setFechaIndexacion(LocalDateTime.now());
+                contenidoDigitalRepository.save(nuevoCd);
+            }
+
             redirectAttributes.addAttribute("actualizado", true);
         } catch (Exception e) {
             redirectAttributes.addAttribute("error", "Error al actualizar el libro: " + e.getMessage());
