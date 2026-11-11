@@ -33,6 +33,7 @@
                 <a th:href="@{/admin/catalogo}" class="nav-link-wire">Catálogo de Libros</a>
                 <a th:href="@{/admin/prestamos}" class="nav-link-wire">Control de Préstamos &amp; WhatsApp</a>
                 <a th:href="@{/admin/catalogacion}" class="nav-link-wire active">Catalogación &amp; Gestión</a>
+                <a th:href="@{/admin/reportes}" class="nav-link-wire"><i class="bi bi-file-earmark-bar-graph me-1"></i> Reportes (PDF/Excel)</a>
                 <a th:href="@{/admin/telemetria}" class="nav-link-wire">Telemetría Actuator</a>
             </div>
 
@@ -190,9 +191,17 @@
                     <h4 class="fw-bold text-dark mb-1">Inventario General de Libros (Gestión y Baja)</h4>
                     <p class="text-muted small mb-0">Visualiza los títulos activos en biblioteca y da de baja ejemplares obsoletos o retirados.</p>
                 </div>
-                <a th:href="@{/admin/catalogacion(tab='formulario')}" class="btn btn-sm btn-wire-green">
-                    <i class="bi bi-plus-lg me-1"></i> Agregar Nuevo Libro
-                </a>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/reportes/libros/pdf}" class="btn btn-sm btn-danger">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                    </a>
+                    <a th:href="@{/reportes/libros/excel}" class="btn btn-sm btn-success">
+                        <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                    </a>
+                    <a th:href="@{/admin/catalogacion(tab='formulario')}" class="btn btn-sm btn-wire-green">
+                        <i class="bi bi-plus-lg me-1"></i> Agregar Nuevo Libro
+                    </a>
+                </div>
             </div>
 
             <div class="table-responsive">

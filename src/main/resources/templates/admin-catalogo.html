@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo de Libros (Admin) - Biblioteca Académica del Sur</title>
-    <meta name="description" content="Sistema Integrado de Gestión Bibliográfica, Préstamos Físicos y Catálogo Digital - Biblioteca Académica del Sur.">
+    <meta name="description" content="Sistema Integrado de GestiÃ³n BibliogrÃ¡fica, PrÃ©stamos FÃ­sicos y CatÃ¡logo Digital - Biblioteca AcadÃ©mica del Sur.">
     <meta name="keywords" content="biblioteca, libros, prestamos, catalogo digital, arequipa, software, educacion">
-    <meta property="og:site_name" content="Biblioteca Académica del Sur">
+    <meta property="og:site_name" content="Biblioteca AcadÃ©mica del Sur">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='2' y='4' width='4' height='16' rx='1' fill='%23ef4444'/><rect x='8' y='2' width='4' height='18' rx='1' fill='%23eab308'/><rect x='14' y='6' width='4' height='14' rx='1' fill='%2322c55e'/><rect x='20' y='3' width='3' height='17' rx='1' fill='%2306b6d4'/></svg>">
     <!-- Bootstrap 5 CSS -->
@@ -16,7 +16,7 @@
 </head>
 <body class="bg-light min-vh-100 d-flex flex-column">
 
-    <!-- BARRA DE NAVEGACIÓN ADMINISTRATIVA (MODO ADMINISTRADOR) -->
+    <!-- BARRA DE NAVEGACIÃ“N ADMINISTRATIVA (MODO ADMINISTRADOR) -->
     <header class="navbar-wire sticky-top">
         <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
             <div class="d-flex align-items-center">
@@ -42,8 +42,9 @@
                 <a th:href="@{/admin/catalogacion}" class="nav-link-wire">
                     <i class="bi bi-plus-circle me-1"></i> Registrar &amp; Catalogar
                 </a>
+                <a th:href="@{/admin/reportes}" class="nav-link-wire"><i class="bi bi-file-earmark-bar-graph me-1"></i> Reportes (PDF/Excel)</a>
                 <a th:href="@{/admin/telemetria}" class="nav-link-wire">
-                    <i class="bi bi-speedometer2 me-1"></i> Telemetría Actuator
+                    <i class="bi bi-speedometer2 me-1"></i> Telemetrí­a Actuator
                 </a>
             </div>
 
@@ -56,7 +57,7 @@
         </div>
     </header>
 
-    <!-- CONTENIDO PRINCIPAL: CATÁLOGO DE LIBROS (ADMINISTRADOR) -->
+    <!-- CONTENIDO PRINCIPAL: CATÃLOGO DE LIBROS (ADMINISTRADOR) -->
     <main class="container py-4">
 
         <!-- Banner Exclusivo de Privilegios de Administrador -->
@@ -71,10 +72,16 @@
                     </div>
                     <h4 class="fw-bold text-dark mb-1">Catálogo General de Libros e Inventario</h4>
                     <p class="text-muted small mb-0">
-                        Como administrador, puedes explorar todos los títulos del fondo bibliográfico, actualizar sus datos técnicos (título, autor, ISBN, editorial, stock disponible) y dar de baja ejemplares definitivamente.
+                        Como administrador, puedes explorar todos los tí­tulos del fondo bibliográfico, actualizar sus datos técnicos (tí­tulo, autor, ISBN, editorial, stock disponible) y dar de baja ejemplares definitivamente.
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end d-flex flex-wrap justify-content-lg-end gap-2">
+                    <a th:href="@{/reportes/libros/pdf}" class="btn btn-danger">
+                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                    </a>
+                    <a th:href="@{/reportes/libros/excel}" class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                    </a>
                     <a th:href="@{/admin/catalogacion(tab='formulario')}" class="btn btn-wire-green">
                         <i class="bi bi-plus-lg me-1"></i> Nuevo Libro
                     </a>
@@ -85,7 +92,7 @@
             </div>
         </div>
 
-        <!-- Alertas de Retroalimentación de Operaciones -->
+        <!-- Alertas de RetroalimentaciÃ³n de Operaciones -->
         <div th:if="${actualizado}" class="alert alert-success alert-dismissible fade show wire-card p-3 mb-4" role="alert">
             <div class="d-flex align-items-center">
                 <i class="bi bi-check-circle-fill fs-4 text-success me-2"></i>
@@ -100,7 +107,7 @@
             <div class="d-flex align-items-center">
                 <i class="bi bi-trash3-fill fs-4 text-warning me-2"></i>
                 <div>
-                    <strong>¡Libro Dado de Baja!</strong> El ejemplar ha sido eliminado y retirado permanentemente del catálogo.
+                    <strong>Libro Dado de Baja!</strong> El ejemplar ha sido eliminado y retirado permanentemente del catálogo.
                 </div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
@@ -116,12 +123,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
 
-        <!-- Tarjetas de Métricas de Inventario (KPIs de Administración) -->
+        <!-- Tarjetas de MÃ©tricas de Inventario (KPIs de AdministraciÃ³n) -->
         <div class="row g-3 mb-4">
             <div class="col-sm-6 col-lg-3">
                 <div class="wire-card p-3 bg-white">
                     <div class="text-muted small fw-bold text-uppercase mb-1">
-                        <i class="bi bi-book-half text-primary me-1"></i> Títulos Registrados
+                        <i class="bi bi-book-half text-primary me-1"></i> TÃ­tulos Registrados
                     </div>
                     <div class="fs-3 fw-bold text-dark" th:text="${totalLibros}">0</div>
                     <div class="text-muted small">Títulos en base de datos</div>
@@ -130,7 +137,7 @@
             <div class="col-sm-6 col-lg-3">
                 <div class="wire-card p-3 bg-white">
                     <div class="text-muted small fw-bold text-uppercase mb-1">
-                        <i class="bi bi-collection text-info me-1"></i> Ejemplares Físicos
+                        <i class="bi bi-collection text-info me-1"></i> Ejemplares Fí­sicos
                     </div>
                     <div class="fs-3 fw-bold text-dark" th:text="${totalEjemplares}">0</div>
                     <div class="text-muted small">Copias totales de acervo</div>
@@ -156,26 +163,26 @@
             </div>
         </div>
 
-        <!-- Filtros y Búsqueda para el Administrador -->
+        <!-- Filtros y BÃºsqueda para el Administrador -->
         <div class="wire-card p-3 p-md-4 mb-4">
             <form th:action="@{/admin/catalogo}" method="get">
                 <div class="row g-3 align-items-center">
-                    <!-- Campo de búsqueda -->
+                    <!-- Campo de bÃºsqueda -->
                     <div class="col-md-6 col-lg-5">
                         <label class="form-label fw-bold small text-dark mb-1">Búsqueda Rápida:</label>
                         <div class="input-group">
-                            <input type="text" name="query" th:value="${query}" class="form-control" placeholder="Buscar por título, autor, ISBN, editorial...">
+                            <input type="text" name="query" th:value="${query}" class="form-control" placeholder="Buscar por tí­tulo, autor, ISBN, editorial...">
                             <button class="btn btn-wire-yellow px-3" type="submit">
                                 <i class="bi bi-search me-1"></i> Buscar
                             </button>
                         </div>
                     </div>
 
-                    <!-- Filtro por Categoría -->
+                    <!-- Filtro por CategorÃ­a -->
                     <div class="col-md-3 col-lg-3">
                         <label class="form-label fw-bold small text-dark mb-1">Filtrar Categoría:</label>
                         <select name="categoriaId" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="">Todas las Categorías</option>
+                            <option value="">Todas las Categorí­as</option>
                             <option th:each="cat : ${categorias}" 
                                     th:value="${cat.idCategoria}" 
                                     th:text="${cat.nombre}"
@@ -194,7 +201,7 @@
                         </select>
                     </div>
 
-                    <!-- Botón para Limpiar Filtros -->
+                    <!-- BotÃ³n para Limpiar Filtros -->
                     <div class="col-lg-2 d-flex align-items-end">
                         <a th:href="@{/admin/catalogo}" class="btn btn-sm btn-wire-outline w-100 py-2">
                             <i class="bi bi-arrow-counterclockwise me-1"></i> Limpiar
@@ -209,18 +216,18 @@
             <div>
                 <h5 class="fw-bold mb-0 text-dark">
                     Libros en Catálogo: 
-                    <span class="text-primary"><span th:text="${libros.size()}">0</span> títulos encontrados</span>
+                    <span class="text-primary"><span th:text="${libros.size()}">0</span> tí­tulos encontrados</span>
                 </h5>
                 <span class="text-muted small" th:if="${query != ''}">
                     Filtro activo para: "<strong><span th:text="${query}"></span></strong>"
                 </span>
             </div>
 
-            <!-- Botones para alternar entre Vista Cuadrícula y Vista Tabla -->
+            <!-- Botones para alternar entre Vista CuadrÃ­cula y Vista Tabla -->
             <ul class="nav nav-pills" id="adminViewTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active py-1 px-3 small fw-bold" id="grid-view-tab" data-bs-toggle="pill" data-bs-target="#grid-view" type="button" role="tab">
-                        <i class="bi bi-grid-fill me-1"></i> Cuadrícula
+                        <i class="bi bi-grid-fill me-1"></i> Cuadrí­cula
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -231,7 +238,7 @@
             </ul>
         </div>
 
-        <!-- Estado Vacío si no hay resultados -->
+        <!-- Estado VacÃ­o si no hay resultados -->
         <div th:if="${libros.isEmpty()}" class="wire-card p-5 text-center my-4 bg-white">
             <i class="bi bi-journal-x fs-1 text-muted d-block mb-3"></i>
             <h5 class="fw-bold text-dark">No se encontraron libros en el catálogo</h5>
@@ -248,11 +255,11 @@
             </div>
         </div>
 
-        <!-- CONTENEDOR DE PESTAÑAS (CUADRÍCULA / TABLA) -->
+        <!-- CONTENEDOR DE PESTAÃ‘AS (CUADRÃCULA / TABLA) -->
         <div th:unless="${libros.isEmpty()}" class="tab-content" id="adminViewTabsContent">
 
             <!-- ======================================================== -->
-            <!-- 1. VISTA CUADRÍCULA (CARDS CON ACCIONES ADMINISTRADOR)   -->
+            <!-- 1. VISTA CUADRÃCULA (CARDS CON ACCIONES ADMINISTRADOR)   -->
             <!-- ======================================================== -->
             <div class="tab-pane fade show active" id="grid-view" role="tabpanel">
                 <div class="row g-4 mb-4">
@@ -276,9 +283,9 @@
                                         </div>
                                     </div>
 
-                                    <!-- Datos bibliográficos del libro -->
+                                    <!-- Datos bibliogrÃ¡ficos del libro -->
                                     <div class="col-7">
-                                        <h6 class="fw-bold text-dark mb-1 lh-sm" th:text="${libro.titulo}">Título del Libro</h6>
+                                        <h6 class="fw-bold text-dark mb-1 lh-sm" th:text="${libro.titulo}">Tí­tulo del Libro</h6>
                                         
                                         <p class="text-muted small mb-1">
                                             <strong>Autor:</strong>
@@ -291,8 +298,8 @@
                                         </p>
 
                                         <p class="text-muted small mb-1">
-                                            <strong>Categoría:</strong>
-                                            <span th:if="${libro.categorias != null and !libro.categorias.isEmpty()}" th:text="${libro.categorias[0].nombre}">Ingeniería</span>
+                                            <strong>Categorí­a:</strong>
+                                            <span th:if="${libro.categorias != null and !libro.categorias.isEmpty()}" th:text="${libro.categorias[0].nombre}">IngenierÃ­a</span>
                                             <span th:unless="${libro.categorias != null and !libro.categorias.isEmpty()}">General</span>
                                         </p>
 
@@ -314,7 +321,7 @@
                                 </div>
                             </div>
 
-                            <!-- Estado de Stock e Información de Almacén -->
+                            <!-- Estado de Stock e InformaciÃ³n de AlmacÃ©n -->
                             <div class="pt-2 border-top mt-2">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="small fw-semibold text-muted">Stock en Sistema:</span>
@@ -328,9 +335,9 @@
                                     </div>
                                 </div>
 
-                                <!-- BOTONES DE ACCIÓN EXCLUSIVOS DEL ADMINISTRADOR -->
+                                <!-- BOTONES DE ACCIÃ“N EXCLUSIVOS DEL ADMINISTRADOR -->
                                 <div class="d-flex gap-2">
-                                    <!-- Botón Editar Libro (Abre Modal) -->
+                                    <!-- BotÃ³n Editar Libro (Abre Modal) -->
                                     <button type="button" 
                                             class="btn btn-sm btn-wire-blue flex-fill" 
                                             data-bs-toggle="modal" 
@@ -338,7 +345,7 @@
                                         <i class="bi bi-pencil-square me-1"></i> Editar
                                     </button>
 
-                                    <!-- Botón Eliminar Libro (Abre Modal de Confirmación) -->
+                                    <!-- BotÃ³n Eliminar Libro (Abre Modal de ConfirmaciÃ³n) -->
                                     <button type="button" 
                                             class="btn btn-sm btn-outline-danger fw-bold flex-fill" 
                                             data-bs-toggle="modal" 
@@ -354,19 +361,30 @@
             </div>
 
             <!-- ======================================================== -->
-            <!-- 2. VISTA TABLA DETALLADA (GESTIÓN ADMINISTRATIVA)        -->
+            <!-- 2. VISTA TABLA DETALLADA (GESTIÃ“N ADMINISTRATIVA)        -->
             <!-- ======================================================== -->
             <div class="tab-pane fade" id="table-view" role="tabpanel">
                 <div class="wire-card p-3 p-md-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-table me-1"></i> Listado de Libros</h6>
+                        <div class="d-flex gap-2">
+                            <a th:href="@{/reportes/libros/pdf}" class="btn btn-sm btn-danger">
+                                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                            </a>
+                            <a th:href="@{/reportes/libros/excel}" class="btn btn-sm btn-success">
+                                <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                            </a>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-wire text-center align-middle mb-0">
                             <thead>
                                 <tr>
                                     <th># ID</th>
-                                    <th class="text-start">Título &amp; Autor</th>
+                                    <th class="text-start">Tí­tulo &amp; Autor</th>
                                     <th>ISBN</th>
-                                    <th>Categoría</th>
-                                    <th>Editorial &amp; Año</th>
+                                    <th>Categorí­a</th>
+                                    <th>Editorial &amp; AÃ±o</th>
                                     <th>Stock Total</th>
                                     <th>Disponible</th>
                                     <th>Acciones Administrador</th>
@@ -376,7 +394,7 @@
                                 <tr th:each="libro, iterStat : ${libros}">
                                     <td class="fw-bold" th:text="${libro.idLibro}">1</td>
                                     <td class="text-start">
-                                        <div class="fw-bold text-dark" th:text="${libro.titulo}">Título del Libro</div>
+                                        <div class="fw-bold text-dark" th:text="${libro.titulo}">Tí­tulo del Libro</div>
                                         <div class="text-muted small">
                                             <span th:if="${libro.autores != null and !libro.autores.isEmpty()}">
                                                 <i class="bi bi-person me-1"></i>
@@ -391,7 +409,7 @@
                                     <td>
                                         <span class="badge bg-secondary-subtle text-secondary border" 
                                               th:if="${libro.categorias != null and !libro.categorias.isEmpty()}" 
-                                              th:text="${libro.categorias[0].nombre}">Categoría</span>
+                                              th:text="${libro.categorias[0].nombre}">Categorí­a</span>
                                         <span class="badge bg-light text-muted border" 
                                               th:unless="${libro.categorias != null and !libro.categorias.isEmpty()}">General</span>
                                     </td>
@@ -436,11 +454,11 @@
         </div>
 
         <!-- ======================================================== -->
-        <!-- MODALES DE EDICIÓN Y ELIMINACIÓN PARA CADA LIBRO         -->
+        <!-- MODALES DE EDICIÃ“N Y ELIMINACIÃ“N PARA CADA LIBRO         -->
         <!-- ======================================================== -->
         <div th:each="libro : ${libros}">
 
-            <!-- MODAL DE EDICIÓN -->
+            <!-- MODAL DE EDICIÃ“N -->
             <div class="modal fade" th:id="'modalEditar' + ${libro.idLibro}" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content wire-card border-2">
@@ -471,14 +489,14 @@
                                             <span class="input-group-text"><i class="bi bi-image"></i></span>
                                             <input type="url" name="portadaUrl" th:value="${libro.portadaUrl}" class="form-control" placeholder="https://ejemplo.com/portada.jpg">
                                         </div>
-                                        <div class="form-text small">Ingresa la dirección web (URL) de la imagen para la carátula del libro.</div>
+                                        <div class="form-text small">Ingresa la direcciÃ³n web (URL) de la imagen para la carÃ¡tula del libro.</div>
                                     </div>
                                 </div>
 
                                 <div class="row g-3 mb-3">
-                                    <!-- Título -->
+                                    <!-- TÃ­tulo -->
                                     <div class="col-md-8">
-                                        <label class="form-label small fw-bold text-dark">Título del Libro: *</label>
+                                        <label class="form-label small fw-bold text-dark">TÃ­tulo del Libro: *</label>
                                         <input type="text" name="titulo" th:value="${libro.titulo}" class="form-control" required>
                                     </div>
                                     <!-- ISBN -->
@@ -489,11 +507,11 @@
                                 </div>
 
                                 <div class="row g-3 mb-3">
-                                    <!-- Categoría -->
+                                    <!-- CategorÃ­a -->
                                     <div class="col-md-6">
-                                        <label class="form-label small fw-bold text-dark">Categoría Temática:</label>
+                                        <label class="form-label small fw-bold text-dark">CategorÃ­a TemÃ¡tica:</label>
                                         <select name="categoriaId" class="form-select">
-                                            <option value="">-- Conservar / Seleccionar Categoría --</option>
+                                            <option value="">-- Conservar / Seleccionar CategorÃ­a --</option>
                                             <option th:each="cat : ${categorias}" 
                                                     th:value="${cat.idCategoria}" 
                                                     th:text="${cat.nombre}"
@@ -518,37 +536,37 @@
                                         <label class="form-label small fw-bold text-dark">Editorial:</label>
                                         <input type="text" name="editorial" th:value="${libro.editorial}" class="form-control" placeholder="Ej. Prentice Hall">
                                     </div>
-                                    <!-- Año de Publicación -->
+                                    <!-- AÃ±o de PublicaciÃ³n -->
                                     <div class="col-md-3">
-                                        <label class="form-label small fw-bold text-dark">Año de Publicación:</label>
+                                        <label class="form-label small fw-bold text-dark">AÃ±o de PublicaciÃ³n:</label>
                                         <input type="number" name="anioPublicacion" th:value="${libro.anioPublicacion ?: 2024}" class="form-control" min="1900" max="2099">
                                     </div>
                                     <!-- Idioma -->
                                     <div class="col-md-4">
                                         <label class="form-label small fw-bold text-dark">Idioma:</label>
-                                        <input type="text" name="idioma" th:value="${libro.idioma ?: 'Español'}" class="form-control" placeholder="Español, Inglés...">
+                                        <input type="text" name="idioma" th:value="${libro.idioma ?: 'EspaÃ±ol'}" class="form-control" placeholder="EspaÃ±ol, InglÃ©s...">
                                     </div>
                                 </div>
 
                                 <div class="row g-3 mb-3">
                                     <!-- Stock Total -->
                                     <div class="col-md-6">
-                                        <label class="form-label small fw-bold text-dark">Stock Total Físico (Ejemplares): *</label>
+                                        <label class="form-label small fw-bold text-dark">Stock Total FÃ­sico (Ejemplares): *</label>
                                         <input type="number" name="stockTotal" th:value="${libro.stockTotal ?: 1}" class="form-control" min="0" required>
-                                        <div class="form-text small">Cantidad física de libros pertenecientes a la biblioteca.</div>
+                                        <div class="form-text small">Cantidad fÃ­sica de libros pertenecientes a la biblioteca.</div>
                                     </div>
                                     <!-- Stock Disponible -->
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold text-dark">Stock Disponible en Sala: *</label>
                                         <input type="number" name="stockDisponible" th:value="${libro.stockDisponible ?: 1}" class="form-control" min="0" required>
-                                        <div class="form-text small">Copias disponibles para préstamo inmediato a lectores.</div>
+                                        <div class="form-text small">Copias disponibles para prÃ©stamo inmediato a lectores.</div>
                                     </div>
                                 </div>
 
                                 <!-- Resumen / Sinopsis -->
                                 <div class="mb-2">
-                                    <label class="form-label small fw-bold text-dark">Resumen / Sinopsis Técnica:</label>
-                                    <textarea name="resumen" rows="3" class="form-control" placeholder="Descripción resumida del material..." th:text="${libro.resumen}"></textarea>
+                                    <label class="form-label small fw-bold text-dark">Resumen / Sinopsis TÃ©cnica:</label>
+                                    <textarea name="resumen" rows="3" class="form-control" placeholder="DescripciÃ³n resumida del material..." th:text="${libro.resumen}"></textarea>
                                 </div>
 
                                 <!-- EXTRACTO PDF -->
@@ -619,7 +637,7 @@
                 </div>
             </div>
 
-            <!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN -->
+            <!-- MODAL DE CONFIRMACIÃ“N DE ELIMINACIÃ“N -->
             <div class="modal fade" th:id="'modalEliminar' + ${libro.idLibro}" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content wire-card border-danger">
@@ -635,28 +653,28 @@
                             <div class="modal-body p-4 text-center">
                                 <i class="bi bi-trash3 text-danger display-4 d-block mb-3"></i>
                                 
-                                <h5 class="fw-bold text-dark mb-2">¿Dar de baja este libro?</h5>
+                                <h5 class="fw-bold text-dark mb-2">Â¿Dar de baja este libro?</h5>
                                 
                                 <p class="text-muted small mb-3">
-                                    Estás a punto de retirar del catálogo el siguiente ejemplar:
+                                    EstÃ¡s a punto de retirar del catÃ¡logo el siguiente ejemplar:
                                 </p>
 
                                 <div class="p-3 bg-light rounded-3 border text-start mb-3">
-                                    <div class="fw-bold text-dark" th:text="${libro.titulo}">Título del Libro</div>
+                                    <div class="fw-bold text-dark" th:text="${libro.titulo}">TÃ­tulo del Libro</div>
                                     <div class="small text-muted"><strong>ISBN:</strong> <span th:text="${libro.isbn}"></span></div>
                                     <div class="small text-muted"><strong>Ejemplares en sistema:</strong> <span th:text="${libro.stockTotal}"></span></div>
                                 </div>
 
                                 <div class="notice-box-yellow small text-start">
                                     <i class="bi bi-shield-exclamation text-warning me-1"></i>
-                                    <strong>Operación exclusiva de Administrador:</strong> Esta acción eliminará el registro bibliográfico del sistema. Si el libro tiene préstamos activos, la base de datos protegerá la integridad del registro.
+                                    <strong>OperaciÃ³n exclusiva de Administrador:</strong> Esta acciÃ³n eliminarÃ¡ el registro bibliogrÃ¡fico del sistema. Si el libro tiene prÃ©stamos activos, la base de datos protegerÃ¡ la integridad del registro.
                                 </div>
                             </div>
 
                             <div class="modal-footer bg-light border-top d-flex justify-content-between">
                                 <button type="button" class="btn btn-wire-outline" data-bs-dismiss="modal">Cancelar</button>
                                 <button type="submit" class="btn btn-danger fw-bold px-4">
-                                    <i class="bi bi-trash3-fill me-1"></i> Sí, Eliminar Definitivamente
+                                    <i class="bi bi-trash3-fill me-1"></i> SÃ­, Eliminar Definitivamente
                                 </button>
                             </div>
                         </form>
@@ -672,7 +690,7 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- PIE DE PÁGINA INSTITUCIONAL -->
+    <!-- PIE DE PÃGINA INSTITUCIONAL -->
     <footer class="footer-wire mt-auto py-4 border-top bg-white">
         <div class="container">
             <div class="row g-4 align-items-center">
@@ -684,15 +702,15 @@
                             <span class="book-green"></span>
                             <span class="book-blue"></span>
                         </div>
-                        <span class="fw-bold text-dark fs-6">Biblioteca Académica del Sur</span>
+                        <span class="fw-bold text-dark fs-6">Biblioteca AcadÃ©mica del Sur</span>
                     </div>
                     <p class="text-muted small mb-0">
-                        Pabellón de Biblioteca y Sala de Lectura &bull; Sede Central Arequipa &bull; Atención de Lunes a Sábado de 08:00 a 20:00 hrs.
+                        PabellÃ³n de Biblioteca y Sala de Lectura &bull; Sede Central Arequipa &bull; AtenciÃ³n de Lunes a SÃ¡bado de 08:00 a 20:00 hrs.
                     </p>
                 </div>
                 <div class="col-md-6 text-center text-md-end small text-muted">
-                    <div><i class="bi bi-shield-check text-success me-1"></i> Sistema Integrado de Circulación y Préstamos Bibliográficos</div>
-                    <div class="mt-1">&copy; 2026 Biblioteca Académica del Sur &bull; Todos los derechos reservados.</div>
+                    <div><i class="bi bi-shield-check text-success me-1"></i> Sistema Integrado de CirculaciÃ³n y PrÃ©stamos BibliogrÃ¡ficos</div>
+                    <div class="mt-1">&copy; 2026 Biblioteca AcadÃ©mica del Sur &bull; Todos los derechos reservados.</div>
                 </div>
             </div>
         </div>
@@ -712,3 +730,4 @@
     </script>
 </body>
 </html>
+

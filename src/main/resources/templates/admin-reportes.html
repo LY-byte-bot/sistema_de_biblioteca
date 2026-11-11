@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Reportes (PDF / Excel) - Biblioteca Académica del Sur</title>
+    <meta name="description" content="Módulo de Generación y Exportación de Reportes Oficiales en PDF y Excel para el Sistema de Biblioteca.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='2' y='4' width='4' height='16' rx='1' fill='%23ef4444'/><rect x='8' y='2' width='4' height='18' rx='1' fill='%23eab308'/><rect x='14' y='6' width='4' height='14' rx='1' fill='%2322c55e'/><rect x='20' y='3' width='3' height='17' rx='1' fill='%2306b6d4'/></svg>">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-light min-vh-100 d-flex flex-column">
+
+    <!-- BARRA DE NAVEGACIÓN ADMINISTRATIVA -->
+    <header class="navbar-wire sticky-top">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="brand-books">
+                    <span class="book-red"></span>
+                    <span class="book-yellow"></span>
+                    <span class="book-green"></span>
+                    <span class="book-blue"></span>
+                </div>
+                <div>
+                    <span class="fw-bold fs-5 text-dark">Panel Admin - Biblioteca Académica</span>
+                    <span class="badge bg-primary-subtle text-primary border ms-2 small">Módulo Reportes</span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 my-2 my-md-0">
+                <a th:href="@{/admin/catalogo}" class="nav-link-wire">
+                    <i class="bi bi-grid-3x3-gap-fill me-1"></i> Catálogo de Libros
+                </a>
+                <a th:href="@{/admin/prestamos}" class="nav-link-wire">
+                    <i class="bi bi-arrow-left-right me-1"></i> Préstamos &amp; WhatsApp
+                </a>
+                <a th:href="@{/admin/catalogacion}" class="nav-link-wire">
+                    <i class="bi bi-plus-circle me-1"></i> Catalogación
+                </a>
+                <a th:href="@{/admin/reportes}" class="nav-link-wire active">
+                    <i class="bi bi-file-earmark-bar-graph me-1"></i> Reportes (PDF/Excel)
+                </a>
+                <a th:href="@{/admin/telemetria}" class="nav-link-wire">
+                    <i class="bi bi-speedometer2 me-1"></i> Telemetría Actuator
+                </a>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="small fw-semibold text-dark">
+                    <i class="bi bi-shield-lock-fill me-1 text-primary"></i> Bibliotecario (Admin)
+                </span>
+                <a th:href="@{/logout}" class="btn btn-sm btn-wire-outline">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="container py-4 flex-grow-1">
+
+        <!-- Banner Encabezado -->
+        <div class="wire-card p-4 mb-4 bg-white shadow-sm border-0">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        
+                    </div>
+                    <h3 class="fw-bold text-dark mb-1">Módulo Central de Reportes Oficiales</h3>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="p-3 bg-light rounded border text-start">
+                        <div class="small text-muted"><strong>Biblioteca:</strong> Biblioteca Académica del Sur</div>
+                        <div class="small text-muted"><strong>Institución:</strong> Universidad Tecnológica del Perú (UTP)</div>
+                        <div class="small text-muted"><strong>Sede:</strong> Av. Tacna y Arica 160, Arequipa</div>
+                        <div class="small text-muted"><strong>Contacto:</strong> matiasfameaura@utp.edu.pe</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Maestra de Reportes por Cada Entidad de la BD -->
+        <div class="wire-card p-4 bg-white shadow-sm border-0 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">Datos Disponibles para Exportación</h5>
+                    <span class="text-muted small">Selecciona el formato deseado para generar el reporte.</span>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle border">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 20%;">Tabla en BD</th>
+                            <th style="width: 25%;">Descripción del Módulo</th>
+                            <th style="width: 15%;" class="text-center">Total Registros</th>
+                            <th style="width: 35%;" class="text-center">Acciones de Descarga</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 1. Libros -->
+                        <tr>
+                            <td class="fw-bold text-muted">1</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_libro</span>
+                                <strong class="d-block text-primary">Libros &amp; Catálogo</strong>
+                            </td>
+                            <td class="small text-muted">Fondo bibliográfico, ISBN, títulos, editoriales, stock total y disponible.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalLibros}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/libros/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/libros/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 2. Usuarios -->
+                        <tr>
+                            <td class="fw-bold text-muted">2</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_usuario</span>
+                                <strong class="d-block text-primary">Padrón de Usuarios</strong>
+                            </td>
+                            <td class="small text-muted">Lectores, bibliotecarios y administradores registrados con DNI, correo y estado.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalUsuarios}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/usuarios/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/usuarios/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 3. Préstamos -->
+                        <tr>
+                            <td class="fw-bold text-muted">3</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_prestamo</span>
+                                <strong class="d-block text-primary">Préstamos Físicos</strong>
+                            </td>
+                            <td class="small text-muted">Control de préstamos vigentes y cerrados, fecha de préstamo y vencimiento.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalPrestamos}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/prestamos/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/prestamos/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 4. Devoluciones -->
+                        <tr>
+                            <td class="fw-bold text-muted">4</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_devolucion</span>
+                                <strong class="d-block text-primary">Devoluciones &amp; Multas</strong>
+                            </td>
+                            <td class="small text-muted">Registro de entrega de ejemplares, días de retraso, multas aplicadas y estado físico.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalDevoluciones}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/devoluciones/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/devoluciones/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 5. Reservas -->
+                        <tr>
+                            <td class="fw-bold text-muted">5</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_reserva</span>
+                                <strong class="d-block text-primary">Reservas de Ejemplares</strong>
+                            </td>
+                            <td class="small text-muted">Solicitudes anticipadas de libros pendientes o atendidas por lectores.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalReservas}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/reservas/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/reservas/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 6. Autores -->
+                        <tr>
+                            <td class="fw-bold text-muted">6</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_autor</span>
+                                <strong class="d-block text-primary">Autores Literarios</strong>
+                            </td>
+                            <td class="small text-muted">Padrón de autores registrados y total de obras publicadas en el catálogo.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalAutores}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/autores/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/autores/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 7. Categorías -->
+                        <tr>
+                            <td class="fw-bold text-muted">7</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_categoria</span>
+                                <strong class="d-block text-primary">Categorías Bibliográficas</strong>
+                            </td>
+                            <td class="small text-muted">Clasificación temática de áreas académicas, ciencias, ingeniería y literatura.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalCategorias}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/categorias/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/categorias/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 8. Roles -->
+                        <tr>
+                            <td class="fw-bold text-muted">8</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_rol</span>
+                                <strong class="d-block text-primary">Roles de Seguridad</strong>
+                            </td>
+                            <td class="small text-muted">Niveles de acceso del sistema (ADMIN, BIBLIOTECARIO, LECTOR) y descripción.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalRoles}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/roles/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/roles/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 9. Contenidos Digitales -->
+                        <tr>
+                            <td class="fw-bold text-muted">9</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_contenido_digital</span>
+                                <strong class="d-block text-primary">Contenidos Digitales</strong>
+                            </td>
+                            <td class="small text-muted">Archivos PDF y recursos electrónicos indexados con hash de integridad.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalContenidos}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/contenidos/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/contenidos/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                        <!-- 10. Historial de Búsquedas -->
+                        <tr>
+                            <td class="fw-bold text-muted">10</td>
+                            <td>
+                                <span class="badge bg-secondary-subtle text-dark border me-1">tbl_historial_busqueda</span>
+                                <strong class="d-block text-primary">Historial de Búsquedas</strong>
+                            </td>
+                            <td class="small text-muted">Registro de auditoría de consultas, palabras clave y filtros aplicados por los usuarios.</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6" th:text="${totalHistorial}">0</span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/reportes/historial/pdf}" class="btn btn-sm btn-danger me-2 shadow-sm">
+                                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar PDF
+                                </a>
+                                <a th:href="@{/reportes/historial/excel}" class="btn btn-sm btn-success shadow-sm">
+                                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Generar Excel
+                                </a>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="bg-white border-top py-3 mt-auto">
+        <div class="container text-center small text-muted">
+            Biblioteca Académica del Sur &bull; Universidad Tecnológica del Perú &bull; Módulo de Reportes con OpenPDF y Apache POI.
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

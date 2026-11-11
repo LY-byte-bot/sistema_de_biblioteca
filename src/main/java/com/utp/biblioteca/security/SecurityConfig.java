@@ -57,8 +57,8 @@ public class SecurityConfig {
                 // Endpoints REST de registro y login
                 .requestMatchers(HttpMethod.POST, "/api/usuarios/registro", "/api/usuarios/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/libros/**", "/api/categorias/**", "/api/autores/**").permitAll()
-                // Rutas exclusivas para ADMIN y BIBLIOTECARIO
-                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "BIBLIOTECARIO")
+                // Rutas exclusivas para ADMIN y BIBLIOTECARIO (incluye módulo y endpoints de reportes)
+                .requestMatchers("/admin/**", "/reportes/**", "/export/**", "/*/export/**").hasAnyRole("ADMIN", "BIBLIOTECARIO")
                 .requestMatchers(HttpMethod.POST, "/api/libros/**", "/api/categorias/**", "/api/autores/**").hasAnyRole("ADMIN", "BIBLIOTECARIO")
                 .requestMatchers(HttpMethod.PUT, "/api/libros/**", "/api/categorias/**", "/api/autores/**").hasAnyRole("ADMIN", "BIBLIOTECARIO")
                 .requestMatchers(HttpMethod.DELETE, "/api/**").hasAnyRole("ADMIN", "BIBLIOTECARIO")
