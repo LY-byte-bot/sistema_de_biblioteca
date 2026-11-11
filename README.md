@@ -66,7 +66,7 @@ Todos los documentos generados (PDF y Excel) incluyen automáticamente el encabe
 
 > 💡 **Personalización del Encabezado:**  
 > Puedes modificar el texto o diseño de los encabezados para todos los reportes desde un solo lugar editando:  
-> [`ReporteHeaderUtil.java`](file:///C:/Users/Leiston/Documents/proyecto-marcos-web/sistema_de_biblioteca/src/main/java/com/utp/biblioteca/reports/ReporteHeaderUtil.java)
+> [`ReporteHeaderUtil.java`](file:./sistema_de_biblioteca/src/main/java/com/utp/biblioteca/reports/ReporteHeaderUtil.java)
 
 ### 📋 Tablas de Base de Datos Exportables
 
